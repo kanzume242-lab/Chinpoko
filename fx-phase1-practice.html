@@ -2,219 +2,279 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>FX Replay Trainer - Single HTML</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>XAUUSD Replay Trainer</title>
 <style>
-  :root{
-    --bg:#0b1020;
-    --panel:#121933;
-    --panel2:#1a2244;
-    --text:#e9eefc;
-    --muted:#9fb0d9;
-    --accent:#52a7ff;
-    --buy:#28c76f;
-    --sell:#ff5a6b;
-    --warn:#ffb020;
-    --line:#2d3c70;
-    --border:#27345f;
-    --shadow:0 8px 24px rgba(0,0,0,.25);
-    --priceAxisW:56px;
-    --headerH:44px;
-    --tradebarH:70px;
-    --replayH:86px;
-    --radius:14px;
-  }
-  body.light{
-    --bg:#f4f6fb;
-    --panel:#ffffff;
-    --panel2:#edf2ff;
-    --text:#182134;
-    --muted:#63708f;
-    --accent:#246bff;
-    --buy:#169f54;
-    --sell:#d6364a;
-    --warn:#b67b00;
-    --line:#c9d5f3;
-    --border:#d7e0f2;
-    --shadow:0 8px 24px rgba(31,42,68,.12);
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;height:100%;}
-  body{overflow:hidden;touch-action:manipulation;}
-  button,input,select{font:inherit;}
-  .app{height:100vh;display:flex;flex-direction:column;background:var(--bg);}
-  .screen{display:none;height:100%;width:100%;}
-  .screen.active{display:flex;flex-direction:column;}
-  .row{display:flex;align-items:center;gap:8px;}
-  .topRow, .midRow{
-    min-height:var(--headerH);
-    padding:6px 8px;
-    background:var(--panel);
-    border-bottom:1px solid var(--border);
-  }
-  .topRow{justify-content:space-between;}
-  .midRow{flex-wrap:wrap;}
-  .group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .spacer{flex:1;}
-  .btn, .seg button, .menuBtn, .miniBtn, .tabBtn{
-    border:none;border-radius:12px;background:var(--panel2);color:var(--text);
-    padding:9px 12px;min-height:38px;box-shadow:var(--shadow);cursor:pointer;
-  }
-  .btn.small,.miniBtn{padding:7px 10px;min-height:34px;font-size:12px;}
-  .btn.ghost{background:transparent;border:1px solid var(--border);box-shadow:none;}
-  .btn.active,.seg button.active,.tabBtn.active{background:var(--accent);color:white;}
-  .btn.disabled,.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
-  .seg{display:flex;background:var(--panel2);border-radius:12px;padding:3px;box-shadow:var(--shadow);}
-  .seg button{box-shadow:none;background:transparent;padding:8px 12px;min-height:34px;border-radius:9px;}
-  .titleFile{
-    flex:1;min-width:0;text-align:center;font-size:13px;color:var(--muted);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;
-  }
-  .menuBtn{
-    width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:20px;
-  }
-  .chartWrap{
-    flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);
-  }
-  .canvasPane{
-    position:relative;flex:1;min-height:120px;border-bottom:1px solid var(--border);background:var(--bg);
-  }
-  .canvasPane:last-child{border-bottom:none;}
-  canvas.chartCanvas{display:block;width:100%;height:100%;background:linear-gradient(180deg,rgba(255,255,255,.01),rgba(0,0,0,.02));}
-  .paneLabel{
-    position:absolute;left:8px;top:8px;background:rgba(0,0,0,.25);color:#fff;font-size:11px;
-    padding:4px 8px;border-radius:999px;pointer-events:none;
-  }
-  body.light .paneLabel{background:rgba(24,33,52,.75);}
-  .replayArea{
-    background:var(--panel);border-top:1px solid var(--border);padding:8px;
-    min-height:var(--replayH);
-  }
-  .replayBtns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
-  .timeMarks{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;padding:8px 2px 0;}
-  .tradeBar{
-    min-height:var(--tradebarH);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
-    background:var(--panel);border-top:1px solid var(--border);padding:8px;
-  }
-  .tradeBtn{
-    border:none;border-radius:16px;color:#fff;font-size:18px;font-weight:700;min-height:52px;box-shadow:var(--shadow);
-  }
-  .sellBtn{background:var(--sell);}
-  .buyBtn{background:var(--buy);}
-  .closeBtn{background:#808aa3;}
-  .statusBar{
-    padding:8px;background:var(--panel);border-top:1px solid var(--border);font-size:12px;color:var(--muted);
-    display:flex;justify-content:space-between;gap:8px;white-space:nowrap;overflow:auto;
-  }
-  .overlayMenu, .modal, .sheet{
-    position:fixed;inset:0;display:none;z-index:50;
-  }
-  .overlayMenu.active,.modal.active,.sheet.active{display:block;}
-  .backdrop{
-    position:absolute;inset:0;background:rgba(0,0,0,.45);
-  }
-  .menuPanel, .modalPanel, .sheetPanel{
-    position:absolute;background:var(--panel);color:var(--text);border:1px solid var(--border);
-    box-shadow:var(--shadow);border-radius:16px;
-  }
-  .menuPanel{
-    right:8px;top:54px;width:190px;padding:8px;display:flex;flex-direction:column;gap:6px;
-  }
-  .modalPanel{
-    left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,420px);padding:14px;
-  }
-  .sheetPanel{
-    left:0;right:0;bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0;padding:12px;
-    max-height:78vh;overflow:auto;
-  }
-  .menuItem,.sheetAction{
-    border:none;background:var(--panel2);color:var(--text);padding:12px;border-radius:12px;text-align:left;
-  }
-  .modalTitle,.sheetTitle{font-weight:700;margin-bottom:8px;}
-  .modalBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
-  .sheetGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
-  .field label{font-size:12px;color:var(--muted);}
-  .field input,.field select{
-    border:1px solid var(--border);background:var(--panel2);color:var(--text);
-    border-radius:10px;padding:10px 12px;min-height:40px;
-  }
-  .statsHeader{
-    min-height:50px;display:flex;align-items:center;gap:8px;justify-content:space-between;
-    padding:8px;background:var(--panel);border-bottom:1px solid var(--border);
-  }
-  .statsMain{flex:1;overflow:auto;padding:8px;background:var(--bg);}
-  .card{
-    background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:10px;margin-bottom:10px;
-    box-shadow:var(--shadow);
-  }
-  .card h3{margin:0 0 8px;font-size:14px;}
-  .fileList{display:flex;flex-direction:column;gap:8px;}
-  .fileItem{
-    display:flex;align-items:center;gap:8px;padding:10px;border-radius:12px;background:var(--panel2);border:1px solid transparent;
-  }
-  .fileItem.active{border-color:var(--accent);}
-  .metricGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .metric{
-    background:var(--panel2);border-radius:12px;padding:10px;min-height:76px;
-  }
-  .metric .k{font-size:11px;color:var(--muted);}
-  .metric .v{font-size:19px;font-weight:700;margin-top:6px;}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;}
-  .tabPane{display:none;}
-  .tabPane.active{display:block;}
-  table{
-    width:100%;border-collapse:collapse;font-size:12px;overflow:hidden;
-  }
-  th,td{
-    border-bottom:1px solid var(--border);padding:8px 6px;text-align:right;
-  }
-  th:first-child,td:first-child{text-align:left;}
-  .subtle{color:var(--muted);font-size:12px;}
-  .toggleRow{display:flex;align-items:center;gap:10px;justify-content:space-between;}
-  .switch{
-    position:relative;width:54px;height:30px;background:var(--line);border-radius:999px;border:none;
-  }
-  .switch::after{
-    content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:white;border-radius:50%;
-    transition:.2s;
-  }
-  .switch.on{background:var(--accent);}
-  .switch.on::after{left:27px;}
-  .graphBox{background:var(--panel2);border-radius:12px;padding:8px;margin-bottom:10px;}
-  .graphCanvas{width:100%;height:220px;display:block;}
-  .chartJsBox{width:100%;height:220px;display:none;}
-  .rowWrap{display:flex;gap:8px;flex-wrap:wrap;}
-  .pill{
-    display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:var(--panel2);
-    font-size:11px;color:var(--muted);
-  }
-  .footerNote{font-size:11px;color:var(--muted);line-height:1.5;}
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
-  @media (min-width:768px){
-    .app{max-width:520px;margin:0 auto;border-left:1px solid var(--border);border-right:1px solid var(--border);}
-  }
+:root{
+  --bg:#0b1020;
+  --panel:#121933;
+  --panel2:#1a2244;
+  --panel3:#0f1630;
+  --text:#e9eefc;
+  --muted:#9fb0d9;
+  --accent:#52a7ff;
+  --accent2:#8ec9ff;
+  --buy:#28c76f;
+  --sell:#ff5a6b;
+  --warn:#ffb020;
+  --line:#2d3c70;
+  --border:#27345f;
+  --shadow:0 8px 24px rgba(0,0,0,.25);
+  --priceAxisW:58px;
+  --radius:14px;
+  --headerH:46px;
+  --replayH:86px;
+  --tradebarH:76px;
+  --infoH:62px;
+}
+body.light{
+  --bg:#f4f6fb;
+  --panel:#ffffff;
+  --panel2:#edf2ff;
+  --panel3:#f7f9ff;
+  --text:#182134;
+  --muted:#63708f;
+  --accent:#246bff;
+  --accent2:#78a8ff;
+  --buy:#169f54;
+  --sell:#d6364a;
+  --warn:#b67b00;
+  --line:#c9d5f3;
+  --border:#d7e0f2;
+  --shadow:0 8px 24px rgba(31,42,68,.12);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;}
+body{overflow:hidden;touch-action:manipulation;}
+button,input,select,textarea{font:inherit;}
+.app{height:100vh;display:flex;flex-direction:column;background:var(--bg);}
+.screen{display:none;height:100%;width:100%;}
+.screen.active{display:flex;flex-direction:column;}
+.row{
+  min-height:var(--headerH);
+  display:flex;align-items:center;gap:8px;
+  padding:6px 8px;background:var(--panel);
+  border-bottom:1px solid var(--border);
+}
+.row.wrap{flex-wrap:wrap;align-items:flex-start;}
+.group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.col{display:flex;flex-direction:column;gap:6px;}
+.spacer{flex:1;}
+.seg{
+  display:flex;background:var(--panel2);border-radius:12px;padding:3px;box-shadow:var(--shadow);
+}
+.seg button{
+  border:none;background:transparent;color:var(--text);padding:8px 12px;min-height:36px;border-radius:10px;cursor:pointer;
+}
+.seg button.active{background:var(--accent);color:#fff;}
+.btn,.menuBtn,.tabBtn,.miniBtn{
+  border:none;border-radius:12px;background:var(--panel2);color:var(--text);
+  padding:9px 12px;min-height:40px;box-shadow:var(--shadow);cursor:pointer;
+}
+.btn.small,.miniBtn,.tabBtn{min-height:36px;padding:7px 10px;font-size:12px;}
+.btn.ghost{background:transparent;border:1px solid var(--border);box-shadow:none;}
+.btn.active,.tabBtn.active{background:var(--accent);color:#fff;}
+.btn:disabled,.disabled{opacity:.38;cursor:not-allowed;box-shadow:none!important;}
+.menuBtn{
+  width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;font-size:21px;
+}
+.fileName{
+  flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:13px;color:var(--muted);padding:0 6px;
+}
+.sliderWrap{
+  display:flex;flex-direction:column;gap:4px;min-width:150px;
+  background:var(--panel2);border-radius:12px;padding:6px 8px;box-shadow:var(--shadow);
+}
+.sliderWrap label{
+  display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);
+}
+.sliderWrap input[type="range"]{width:100%;}
+.compactField{
+  display:flex;align-items:center;gap:6px;background:var(--panel2);
+  border-radius:12px;padding:6px 8px;box-shadow:var(--shadow);
+}
+.compactField span{font-size:11px;color:var(--muted);white-space:nowrap;}
+.compactField input{
+  width:60px;min-height:34px;border:1px solid var(--border);border-radius:10px;
+  background:var(--panel3);color:var(--text);padding:6px 8px;
+}
+.chartWrap{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.canvasPane{
+  position:relative;flex:1;min-height:110px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(255,255,255,.01),rgba(0,0,0,.02));
+}
+.canvasPane:last-child{border-bottom:none;}
+canvas.chartCanvas{display:block;width:100%;height:100%;}
+.paneLabel{
+  position:absolute;left:8px;top:8px;background:rgba(0,0,0,.3);color:#fff;font-size:11px;
+  padding:4px 8px;border-radius:999px;pointer-events:none;
+}
+body.light .paneLabel{background:rgba(24,33,52,.78);}
+.modeBadge{
+  position:absolute;right:8px;top:8px;background:rgba(0,0,0,.25);color:#fff;font-size:11px;
+  padding:4px 8px;border-radius:999px;pointer-events:none;
+}
+body.light .modeBadge{background:rgba(24,33,52,.75);}
+.replayArea{
+  min-height:var(--replayH);background:var(--panel);border-top:1px solid var(--border);padding:8px;
+}
+.replayBtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.replayBtn{
+  border:none;border-radius:14px;background:var(--panel2);color:var(--text);
+  min-height:46px;font-size:20px;font-weight:700;box-shadow:var(--shadow);
+}
+.timeMarks{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;padding:8px 2px 0;}
+.infoBar{
+  min-height:var(--infoH);background:var(--panel);border-top:1px solid var(--border);
+  padding:8px;display:flex;align-items:center;gap:8px;overflow:auto;
+}
+.infoCard{
+  flex:1;min-width:0;background:var(--panel2);border-radius:14px;padding:8px 10px;box-shadow:var(--shadow);
+}
+.infoTitle{font-size:11px;color:var(--muted);}
+.infoValue{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tradeBar{
+  min-height:var(--tradebarH);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+  background:var(--panel);border-top:1px solid var(--border);padding:8px;
+}
+.tradeBtn{
+  border:none;border-radius:16px;color:#fff;font-size:18px;font-weight:700;min-height:56px;box-shadow:var(--shadow);
+}
+.sellBtn{background:var(--sell);}
+.buyBtn{background:var(--buy);}
+.closeBtn{background:#7a849e;}
+.overlay,.modal,.sheet,.ctxMenu{
+  position:fixed;inset:0;display:none;z-index:90;
+}
+.overlay.active,.modal.active,.sheet.active,.ctxMenu.active{display:block;}
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);}
+.menuPanel,.modalPanel,.sheetPanel,.ctxPanel{
+  position:absolute;background:var(--panel);color:var(--text);border:1px solid var(--border);
+  border-radius:16px;box-shadow:var(--shadow);
+}
+.menuPanel{
+  right:8px;top:54px;width:220px;padding:8px;display:flex;flex-direction:column;gap:6px;
+}
+.modalPanel{
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(92vw,430px);padding:14px;
+}
+.sheetPanel{
+  left:0;right:0;bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0;
+  padding:12px;max-height:80vh;overflow:auto;
+}
+.ctxPanel{
+  min-width:170px;padding:8px;display:flex;flex-direction:column;gap:6px;
+}
+.menuItem,.sheetAction,.ctxBtn{
+  border:none;background:var(--panel2);color:var(--text);padding:12px;border-radius:12px;text-align:left;
+}
+.modalTitle,.sheetTitle{font-weight:700;margin-bottom:8px;}
+.modalBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.field label{font-size:12px;color:var(--muted);}
+.field input,.field select, .field textarea{
+  border:1px solid var(--border);background:var(--panel2);color:var(--text);
+  border-radius:10px;padding:10px 12px;min-height:42px;
+}
+.field textarea{min-height:120px;resize:vertical;}
+.sheetGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rowWrap{display:flex;gap:8px;flex-wrap:wrap;}
+.switch{
+  position:relative;width:54px;height:30px;background:var(--line);border:none;border-radius:999px;
+}
+.switch::after{
+  content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;
+}
+.switch.on{background:var(--accent);}
+.switch.on::after{left:27px;}
+.statsHeader{
+  min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px;background:var(--panel);border-bottom:1px solid var(--border);
+}
+.statsMain{flex:1;overflow:auto;padding:8px;background:var(--bg);}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:10px;margin-bottom:10px;box-shadow:var(--shadow);
+}
+.card h3{margin:0 0 8px;font-size:14px;}
+.fileList{display:flex;flex-direction:column;gap:8px;}
+.fileItem{
+  display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel2);
+  border-radius:12px;border:1px solid transparent;
+}
+.fileItem.active{border-color:var(--accent);}
+.metricGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.metric{
+  background:var(--panel2);border-radius:12px;padding:10px;min-height:76px;
+}
+.metric .k{font-size:11px;color:var(--muted);}
+.metric .v{font-size:18px;font-weight:700;margin-top:6px;}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;}
+.tabPane{display:none;}
+.tabPane.active{display:block;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th,td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:right;vertical-align:top;}
+th:first-child,td:first-child{text-align:left;}
+.subtle{color:var(--muted);font-size:12px;}
+.graphBox{background:var(--panel2);border-radius:12px;padding:8px;margin-bottom:10px;}
+.graphCanvas,.chartJsCanvas{width:100%;height:220px;display:block;}
+.chartJsCanvas{display:none;}
+.footerNote{font-size:11px;color:var(--muted);line-height:1.5;}
+.badge{
+  display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:var(--panel2);font-size:11px;color:var(--muted);
+}
+hr.sep{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.downloadLink{
+  display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--text);
+  background:var(--panel2);padding:10px 12px;border-radius:12px;
+}
+@media (min-width:768px){
+  .app{max-width:520px;margin:0 auto;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+}
 </style>
 </head>
 <body>
 <div class="app">
   <section id="chartScreen" class="screen active">
-    <div class="topRow">
-      <div class="group">
+    <div class="row wrap">
+      <div class="col">
         <div class="seg" id="modeSeg">
           <button data-mode="practice" class="active">練習</button>
           <button data-mode="review">検証</button>
         </div>
+        <div class="rowWrap">
+          <div class="sliderWrap">
+            <label><span>通常速度</span><strong id="speedLabelText">10本/分</strong></label>
+            <input id="speedRange" type="range" min="2" max="60" step="1" value="10" />
+          </div>
+          <div class="compactField">
+            <span>高速倍率</span>
+            <input id="fastInput" type="number" min="1" max="50" step="1" value="10" />
+          </div>
+        </div>
       </div>
-      <div class="titleFile" id="fileNameLabel">XAU Sample 1</div>
+      <div class="spacer"></div>
       <button class="menuBtn" id="hamburgerBtn">☰</button>
     </div>
 
-    <div class="midRow">
+    <div class="row">
       <div class="group">
         <button class="btn small sessionBtn" data-session="asia">アジア</button>
         <button class="btn small sessionBtn" data-session="london">ロンドン</button>
         <button class="btn small sessionBtn" data-session="ny">NY</button>
+      </div>
+      <div class="fileName" id="fileNameLabel">XAU Sample 1</div>
+    </div>
+
+    <div class="row">
+      <div class="group">
+        <div class="seg" id="viewSeg">
+          <button data-view="single" class="active">1画面</button>
+          <button data-view="split">2画面</button>
+        </div>
+        <button class="btn small" id="slModeBtn">SL</button>
+        <button class="btn small" id="tpModeBtn">TP</button>
       </div>
       <div class="spacer"></div>
       <div class="group">
@@ -223,43 +283,46 @@
           <button data-tf="M15">M15</button>
           <button data-tf="H1">H1</button>
         </div>
-        <div class="seg" id="viewSeg">
-          <button data-view="single" class="active">1画面</button>
-          <button data-view="split">2画面</button>
-        </div>
       </div>
     </div>
 
-    <div class="chartWrap" id="chartWrap">
+    <div class="chartWrap">
       <div class="canvasPane" id="paneTop">
         <canvas id="chartCanvasTop" class="chartCanvas"></canvas>
         <div class="paneLabel" id="paneTopLabel">M1</div>
+        <div class="modeBadge" id="modeBadgeTop">練習</div>
       </div>
       <div class="canvasPane" id="paneBottom" style="display:none;">
         <canvas id="chartCanvasBottom" class="chartCanvas"></canvas>
         <div class="paneLabel" id="paneBottomLabel">M15</div>
+        <div class="modeBadge" id="modeBadgeBottom">練習</div>
       </div>
     </div>
 
     <div class="replayArea">
       <div class="replayBtns">
-        <button id="backBtn" class="btn">戻る</button>
-        <button id="stopBtn" class="btn">停止</button>
-        <button id="playBtn" class="btn active">再生</button>
-        <button id="nextBtn" class="btn">+1</button>
+        <button id="backBtn" class="replayBtn">◀</button>
+        <button id="stopBtn" class="replayBtn">⏸</button>
+        <button id="playBtn" class="replayBtn">▶</button>
       </div>
       <div class="timeMarks">
         <span>17:00</span>
         <span>21:00</span>
         <span>23:00</span>
-        <span id="speedLabel">通常 10本/分</span>
+        <span id="playStateLabel">停止中</span>
       </div>
     </div>
 
-    <div class="statusBar">
-      <span id="statusLeft">Flat</span>
-      <span id="statusMid">価格 -</span>
-      <span id="statusRight">SL/TP -</span>
+    <div class="infoBar" id="positionInfoBar">
+      <div class="infoCard" style="max-width:120px;">
+        <div class="infoTitle">状態</div>
+        <div class="infoValue" id="posStateText">flat</div>
+      </div>
+      <div class="infoCard">
+        <div class="infoTitle">注文情報 / SL TP入力</div>
+        <div class="infoValue" id="posInfoText">なし</div>
+      </div>
+      <button class="btn small" id="manageOrderBtn">管理</button>
     </div>
 
     <div class="tradeBar">
@@ -272,9 +335,9 @@
   <section id="statsScreen" class="screen">
     <div class="statsHeader">
       <button class="btn" id="backToChartBtn">← 戻る</button>
-      <div class="row">
+      <div class="group">
         <span class="subtle">ネット</span>
-        <button class="switch" id="netSwitch" aria-label="internet"></button>
+        <button class="switch" id="netSwitch"></button>
       </div>
     </div>
     <div class="statsMain">
@@ -290,77 +353,101 @@
       <div class="card">
         <h3>表示</h3>
         <div class="tabs">
-          <button class="tabBtn active" data-tab="summary">集計</button>
-          <button class="tabBtn" data-tab="graphs">グラフ</button>
+          <button class="tabBtn active" data-tab="graphs">グラフ</button>
+          <button class="tabBtn" data-tab="summary">集計</button>
           <button class="tabBtn" data-tab="optimization">イグジット最適化</button>
+          <button class="tabBtn" data-tab="settings">設定</button>
         </div>
       </div>
 
-      <div id="tab-summary" class="tabPane active">
+      <div id="tab-graphs" class="tabPane active">
+        <div class="card">
+          <h3>Equityカーブ</h3>
+          <div class="graphBox">
+            <canvas id="equityCanvas" class="graphCanvas"></canvas>
+            <canvas id="equityChartJs" class="chartJsCanvas"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3>時間帯別 平均R / 勝率</h3>
+          <div class="graphBox">
+            <canvas id="hourStatsCanvas" class="graphCanvas"></canvas>
+            <canvas id="hourStatsChartJs" class="chartJsCanvas"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3>R分布ヒストグラム</h3>
+          <div class="graphBox">
+            <canvas id="histCanvas" class="graphCanvas"></canvas>
+            <canvas id="histChartJs" class="chartJsCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-summary" class="tabPane">
         <div class="card">
           <h3>全体統計</h3>
           <div class="metricGrid" id="summaryMetrics"></div>
         </div>
-
         <div class="card">
-          <div class="toggleRow">
+          <div class="rowWrap" style="justify-content:space-between;align-items:center;margin-bottom:8px;">
             <h3 style="margin:0;">時間帯別統計</h3>
-            <div class="row">
+            <div class="group">
               <span class="subtle">10分刻み</span>
               <button class="switch" id="slotModeSwitch"></button>
             </div>
           </div>
           <div id="timeStatsTableWrap"></div>
         </div>
-      </div>
-
-      <div id="tab-graphs" class="tabPane">
         <div class="card">
-          <h3>Equityカーブ</h3>
-          <div class="graphBox">
-            <canvas id="equityCanvas" class="graphCanvas"></canvas>
-            <canvas id="equityChartJs" class="chartJsBox"></canvas>
+          <h3>統計保存</h3>
+          <div class="rowWrap">
+            <button class="btn small" id="downloadJsonBtn">JSON保存</button>
+            <button class="btn small" id="downloadTxtBtn">TXT保存</button>
           </div>
         </div>
         <div class="card">
-          <h3>時間帯別 PF</h3>
-          <div class="graphBox">
-            <canvas id="hourPfCanvas" class="graphCanvas"></canvas>
-            <canvas id="hourPfChartJs" class="chartJsBox"></canvas>
-          </div>
-        </div>
-        <div class="card">
-          <h3>R分布</h3>
-          <div class="graphBox">
-            <canvas id="histCanvas" class="graphCanvas"></canvas>
-            <canvas id="histChartJs" class="chartJsBox"></canvas>
-          </div>
+          <h3>トレード詳細一覧</h3>
+          <div id="tradeListWrap"></div>
         </div>
       </div>
 
       <div id="tab-optimization" class="tabPane">
         <div class="card">
           <h3>N本後決済</h3>
-          <div id="holdBest" class="subtle" style="margin-bottom:8px;"></div>
+          <div class="subtle" id="holdBest"></div>
           <div class="graphBox">
             <canvas id="holdCanvas" class="graphCanvas"></canvas>
-            <canvas id="holdChartJs" class="chartJsBox"></canvas>
+            <canvas id="holdChartJs" class="chartJsCanvas"></canvas>
           </div>
           <div id="holdTableWrap"></div>
         </div>
         <div class="card">
           <h3>RR固定TP</h3>
-          <div id="rrBest" class="subtle" style="margin-bottom:8px;"></div>
+          <div class="subtle" id="rrBest"></div>
           <div class="graphBox">
             <canvas id="rrCanvas" class="graphCanvas"></canvas>
-            <canvas id="rrChartJs" class="chartJsBox"></canvas>
+            <canvas id="rrChartJs" class="chartJsCanvas"></canvas>
           </div>
           <div id="rrTableWrap"></div>
         </div>
         <div class="card">
           <div class="footerNote">
-            簡易最適化です。N本後決済は保有バー数に応じて resultR を減衰/強調するモデル、RR固定TPは既存の resultR 分布と risk を使った一貫した近似モデルです。<br>
-            実データに拡張する場合は、MT5 などから export した CSV（time, open, high, low, close）を読み込む構成へ差し替える想定です。
+            簡易モデルによるイグジット最適化です。N本後決済は保有本数に応じた resultR 再評価、RR固定TPは各 trade の risk と実際の伸びを使った一貫した近似判定です。<br>
+            将来拡張: MT5等のCSV（time, open, high, low, close）を読み込む実データ版へ差し替え可能な構造を想定。
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-settings" class="tabPane">
+        <div class="card">
+          <h3>設定</h3>
+          <div class="rowWrap" style="justify-content:space-between;align-items:center;">
+            <div>
+              <div>水平線ダブルタップで削除</div>
+              <div class="subtle">デフォルトOFF</div>
+            </div>
+            <button class="switch" id="doubleDeleteSwitch"></button>
           </div>
         </div>
       </div>
@@ -368,12 +455,12 @@
   </section>
 </div>
 
-<div class="overlayMenu" id="menuOverlay">
+<div class="overlay" id="menuOverlay">
   <div class="backdrop"></div>
   <div class="menuPanel">
-    <button class="menuItem" id="openStatsMenuBtn">統計</button>
-    <button class="menuItem" id="openOrdersSheetBtn">注文 / SL / TP</button>
-    <button class="menuItem" id="createLineAtPriceBtn">現在価格に分析ライン</button>
+    <button class="menuItem" id="goStatsBtn">統計画面へ</button>
+    <button class="menuItem" id="openOrderSheetBtn">注文/SL/TP</button>
+    <button class="menuItem" id="makeCurrentLineBtn">現在価格に分析ライン</button>
   </div>
 </div>
 
@@ -381,7 +468,7 @@
   <div class="backdrop"></div>
   <div class="modalPanel">
     <div class="modalTitle" id="confirmTitle">確認</div>
-    <div id="confirmMessage" class="subtle">切り替えますか？</div>
+    <div class="subtle" id="confirmMessage">実行しますか？</div>
     <div class="modalBtns">
       <button class="btn ghost" id="confirmCancelBtn">キャンセル</button>
       <button class="btn active" id="confirmOkBtn">OK</button>
@@ -392,8 +479,9 @@
 <div class="sheet" id="orderSheet">
   <div class="backdrop"></div>
   <div class="sheetPanel">
-    <div class="sheetTitle">注文 / ライン操作</div>
-    <div id="selectedLineInfo" class="subtle" style="margin-bottom:10px;">選択ライン: なし</div>
+    <div class="sheetTitle">注文 / SL / TP</div>
+    <div class="subtle" id="selectedLineInfo">選択ライン: なし</div>
+    <hr class="sep">
     <div class="field">
       <label>注文タイプ</label>
       <select id="orderTypeSelect">
@@ -408,1245 +496,1046 @@
     <div class="sheetGrid">
       <div class="field">
         <label>価格</label>
-        <input id="orderPriceInput" type="number" step="0.01" />
+        <input id="orderPriceInput" type="number" step="0.01">
       </div>
       <div class="field">
         <label>SL</label>
-        <input id="slInput" type="number" step="0.01" />
+        <input id="slInput" type="number" step="0.01">
       </div>
       <div class="field">
         <label>TP</label>
-        <input id="tpInput" type="number" step="0.01" />
+        <input id="tpInput" type="number" step="0.01">
       </div>
       <div class="field">
-        <label>通常速度 (本/分)</label>
-        <input id="speedInput" type="number" min="2" max="120" step="1" />
-      </div>
-      <div class="field">
-        <label>高速倍率 N (1〜50)</label>
-        <input id="fastNInput" type="number" min="1" max="50" step="1" />
+        <label>高速倍率</label>
+        <input id="fastInputSheet" type="number" step="1" min="1" max="50">
       </div>
     </div>
     <div class="rowWrap">
-      <button class="sheetAction" id="applyOrderBtn">注文を適用</button>
-      <button class="sheetAction" id="convertSelectedLineBtn">選択ラインを注文価格へ</button>
-      <button class="sheetAction" id="setSlTpFromSelectedLineBtn">選択ラインを SL/TP に反映</button>
-      <button class="sheetAction" id="deleteSelectedLineBtn">選択ライン削除</button>
+      <button class="sheetAction" id="applyOrderBtn">適用</button>
+      <button class="sheetAction" id="convertLineBtn">選択ラインを価格へ</button>
+      <button class="sheetAction" id="setSlTpFromLineBtn">選択ラインをSL/TPへ</button>
+      <button class="sheetAction" id="deleteLineBtn">選択ライン削除</button>
       <button class="sheetAction" id="clearPendingBtn">保留注文キャンセル</button>
-      <button class="sheetAction" id="sheetCloseBtn">閉じる</button>
+      <button class="sheetAction" id="closeSheetBtn">閉じる</button>
     </div>
   </div>
 </div>
 
+<div class="sheet" id="manageSheet">
+  <div class="backdrop"></div>
+  <div class="sheetPanel">
+    <div class="sheetTitle">注文管理</div>
+    <div class="sheetGrid">
+      <div class="field">
+        <label>SL</label>
+        <input id="manageSlInput" type="number" step="0.01">
+      </div>
+      <div class="field">
+        <label>TP</label>
+        <input id="manageTpInput" type="number" step="0.01">
+      </div>
+    </div>
+    <div class="rowWrap">
+      <button class="sheetAction" id="applyManageBtn">SL/TP更新</button>
+      <button class="sheetAction" id="cancelOrCloseBtn">注文取消 / クローズ</button>
+      <button class="sheetAction" id="closeManageSheetBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="ctxMenu" id="lineContextMenu">
+  <div class="backdrop"></div>
+  <div class="ctxPanel" id="lineCtxPanel">
+    <button class="ctxBtn" data-order="buy_limit">Buy Limit</button>
+    <button class="ctxBtn" data-order="sell_limit">Sell Limit</button>
+    <button class="ctxBtn" data-order="buy_stop">Buy Stop</button>
+    <button class="ctxBtn" data-order="sell_stop">Sell Stop</button>
+    <button class="ctxBtn" data-order="delete">削除</button>
+  </div>
+</div>
+
 <script>
-(() => {
+(function(){
+  const STORAGE_KEY = 'xau_replay_trainer_v2';
   const state = {
-    mode: 'practice',
-    screen: 'chart',
-    onlineEnabled: false,
-    chartJsLoaded: false,
-    chartJsLoading: false,
-    selectedLineId: null,
-    isPlaying: false,
-    playTimer: null,
-    speedBarsPerMinute: 10,
-    fastMultiplierN: 10,
-    fastMode: false,
-    fileOrder: [],
-    currentFileId: '',
-    files: {},
-    chart: {
-      timeframe: 'M1',
-      viewMode: 'single',
-      paneConfigs: [{tf:'M1'},{tf:'M15'}],
-      longPressMs: 450,
-      dragThreshold: 8,
-      priceAxisWidth: 56
+    mode:'practice',
+    screen:'chart',
+    onlineEnabled:false,
+    chartJsLoaded:false,
+    chartJsLoading:false,
+    selectedLineId:null,
+    isPlaying:false,
+    playTimer:null,
+    fastMode:false,
+    speedBarsPerMinute:10,
+    fastMultiplierN:10,
+    ui:{
+      statsTab:'graphs',
+      slotDetail:false,
+      lineDoubleDelete:false,
+      setMode:null
     },
-    ui: {
-      slotDetail: false,
-      statsTab: 'summary'
+    fileOrder:[],
+    currentFileId:null,
+    files:{},
+    chart:{
+      timeframe:'M1',
+      viewMode:'single',
+      paneConfigs:[{tf:'M1'}],
+      longPressMs:420,
+      dragThreshold:7,
+      priceAxisWidth:58
     },
-    chartsJsInstances: {}
+    chartsJsInstances:{},
+    transient:{
+      confirmHandler:null,
+      ctxLineId:null
+    }
   };
 
   const els = {
-    body: document.body,
-    chartScreen: document.getElementById('chartScreen'),
-    statsScreen: document.getElementById('statsScreen'),
-    fileNameLabel: document.getElementById('fileNameLabel'),
-    paneTop: document.getElementById('paneTop'),
-    paneBottom: document.getElementById('paneBottom'),
-    chartCanvasTop: document.getElementById('chartCanvasTop'),
-    chartCanvasBottom: document.getElementById('chartCanvasBottom'),
-    paneTopLabel: document.getElementById('paneTopLabel'),
-    paneBottomLabel: document.getElementById('paneBottomLabel'),
-    backBtn: document.getElementById('backBtn'),
-    stopBtn: document.getElementById('stopBtn'),
-    playBtn: document.getElementById('playBtn'),
-    nextBtn: document.getElementById('nextBtn'),
-    sellBtn: document.getElementById('sellBtn'),
-    buyBtn: document.getElementById('buyBtn'),
-    closeBtn: document.getElementById('closeBtn'),
-    statusLeft: document.getElementById('statusLeft'),
-    statusMid: document.getElementById('statusMid'),
-    statusRight: document.getElementById('statusRight'),
-    speedLabel: document.getElementById('speedLabel'),
-    menuOverlay: document.getElementById('menuOverlay'),
-    hamburgerBtn: document.getElementById('hamburgerBtn'),
-    openStatsMenuBtn: document.getElementById('openStatsMenuBtn'),
-    openOrdersSheetBtn: document.getElementById('openOrdersSheetBtn'),
-    createLineAtPriceBtn: document.getElementById('createLineAtPriceBtn'),
-    confirmModal: document.getElementById('confirmModal'),
-    confirmTitle: document.getElementById('confirmTitle'),
-    confirmMessage: document.getElementById('confirmMessage'),
-    confirmCancelBtn: document.getElementById('confirmCancelBtn'),
-    confirmOkBtn: document.getElementById('confirmOkBtn'),
-    orderSheet: document.getElementById('orderSheet'),
-    selectedLineInfo: document.getElementById('selectedLineInfo'),
-    orderTypeSelect: document.getElementById('orderTypeSelect'),
-    orderPriceInput: document.getElementById('orderPriceInput'),
-    slInput: document.getElementById('slInput'),
-    tpInput: document.getElementById('tpInput'),
-    speedInput: document.getElementById('speedInput'),
-    fastNInput: document.getElementById('fastNInput'),
-    applyOrderBtn: document.getElementById('applyOrderBtn'),
-    convertSelectedLineBtn: document.getElementById('convertSelectedLineBtn'),
-    setSlTpFromSelectedLineBtn: document.getElementById('setSlTpFromSelectedLineBtn'),
-    deleteSelectedLineBtn: document.getElementById('deleteSelectedLineBtn'),
-    clearPendingBtn: document.getElementById('clearPendingBtn'),
-    sheetCloseBtn: document.getElementById('sheetCloseBtn'),
-    backToChartBtn: document.getElementById('backToChartBtn'),
-    netSwitch: document.getElementById('netSwitch'),
-    fileList: document.getElementById('fileList'),
-    newFileBtn: document.getElementById('newFileBtn'),
-    deleteFileBtn: document.getElementById('deleteFileBtn'),
-    summaryMetrics: document.getElementById('summaryMetrics'),
-    timeStatsTableWrap: document.getElementById('timeStatsTableWrap'),
-    slotModeSwitch: document.getElementById('slotModeSwitch'),
-    holdBest: document.getElementById('holdBest'),
-    holdTableWrap: document.getElementById('holdTableWrap'),
-    rrBest: document.getElementById('rrBest'),
-    rrTableWrap: document.getElementById('rrTableWrap')
+    body:document.body,
+    chartScreen:document.getElementById('chartScreen'),
+    statsScreen:document.getElementById('statsScreen'),
+    fileNameLabel:document.getElementById('fileNameLabel'),
+    paneTop:document.getElementById('paneTop'),
+    paneBottom:document.getElementById('paneBottom'),
+    chartCanvasTop:document.getElementById('chartCanvasTop'),
+    chartCanvasBottom:document.getElementById('chartCanvasBottom'),
+    paneTopLabel:document.getElementById('paneTopLabel'),
+    paneBottomLabel:document.getElementById('paneBottomLabel'),
+    modeBadgeTop:document.getElementById('modeBadgeTop'),
+    modeBadgeBottom:document.getElementById('modeBadgeBottom'),
+    speedRange:document.getElementById('speedRange'),
+    speedLabelText:document.getElementById('speedLabelText'),
+    fastInput:document.getElementById('fastInput'),
+    hamburgerBtn:document.getElementById('hamburgerBtn'),
+    backBtn:document.getElementById('backBtn'),
+    stopBtn:document.getElementById('stopBtn'),
+    playBtn:document.getElementById('playBtn'),
+    playStateLabel:document.getElementById('playStateLabel'),
+    sellBtn:document.getElementById('sellBtn'),
+    buyBtn:document.getElementById('buyBtn'),
+    closeBtn:document.getElementById('closeBtn'),
+    slModeBtn:document.getElementById('slModeBtn'),
+    tpModeBtn:document.getElementById('tpModeBtn'),
+    posStateText:document.getElementById('posStateText'),
+    posInfoText:document.getElementById('posInfoText'),
+    manageOrderBtn:document.getElementById('manageOrderBtn'),
+    menuOverlay:document.getElementById('menuOverlay'),
+    goStatsBtn:document.getElementById('goStatsBtn'),
+    openOrderSheetBtn:document.getElementById('openOrderSheetBtn'),
+    makeCurrentLineBtn:document.getElementById('makeCurrentLineBtn'),
+    confirmModal:document.getElementById('confirmModal'),
+    confirmTitle:document.getElementById('confirmTitle'),
+    confirmMessage:document.getElementById('confirmMessage'),
+    confirmCancelBtn:document.getElementById('confirmCancelBtn'),
+    confirmOkBtn:document.getElementById('confirmOkBtn'),
+    orderSheet:document.getElementById('orderSheet'),
+    selectedLineInfo:document.getElementById('selectedLineInfo'),
+    orderTypeSelect:document.getElementById('orderTypeSelect'),
+    orderPriceInput:document.getElementById('orderPriceInput'),
+    slInput:document.getElementById('slInput'),
+    tpInput:document.getElementById('tpInput'),
+    fastInputSheet:document.getElementById('fastInputSheet'),
+    applyOrderBtn:document.getElementById('applyOrderBtn'),
+    convertLineBtn:document.getElementById('convertLineBtn'),
+    setSlTpFromLineBtn:document.getElementById('setSlTpFromLineBtn'),
+    deleteLineBtn:document.getElementById('deleteLineBtn'),
+    clearPendingBtn:document.getElementById('clearPendingBtn'),
+    closeSheetBtn:document.getElementById('closeSheetBtn'),
+    manageSheet:document.getElementById('manageSheet'),
+    manageSlInput:document.getElementById('manageSlInput'),
+    manageTpInput:document.getElementById('manageTpInput'),
+    applyManageBtn:document.getElementById('applyManageBtn'),
+    cancelOrCloseBtn:document.getElementById('cancelOrCloseBtn'),
+    closeManageSheetBtn:document.getElementById('closeManageSheetBtn'),
+    lineContextMenu:document.getElementById('lineContextMenu'),
+    lineCtxPanel:document.getElementById('lineCtxPanel'),
+    backToChartBtn:document.getElementById('backToChartBtn'),
+    netSwitch:document.getElementById('netSwitch'),
+    fileList:document.getElementById('fileList'),
+    newFileBtn:document.getElementById('newFileBtn'),
+    deleteFileBtn:document.getElementById('deleteFileBtn'),
+    summaryMetrics:document.getElementById('summaryMetrics'),
+    timeStatsTableWrap:document.getElementById('timeStatsTableWrap'),
+    slotModeSwitch:document.getElementById('slotModeSwitch'),
+    tradeListWrap:document.getElementById('tradeListWrap'),
+    downloadJsonBtn:document.getElementById('downloadJsonBtn'),
+    downloadTxtBtn:document.getElementById('downloadTxtBtn'),
+    holdBest:document.getElementById('holdBest'),
+    holdTableWrap:document.getElementById('holdTableWrap'),
+    rrBest:document.getElementById('rrBest'),
+    rrTableWrap:document.getElementById('rrTableWrap'),
+    doubleDeleteSwitch:document.getElementById('doubleDeleteSwitch')
   };
 
-  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const fmt = (n, d=2) => (n===null || n===undefined || Number.isNaN(n)) ? '-' : Number(n).toFixed(d);
-  const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
-  const uid = (p='id') => p + '_' + Math.random().toString(36).slice(2,9);
-  const pad2 = n => String(n).padStart(2,'0');
-
-  function formatTime(ts){
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  }
-  function getSessionFromHour(hour){
-    if(hour >= 0 && hour < 8) return 'asia';
-    if(hour >= 8 && hour < 16) return 'london';
-    return 'ny';
-  }
+  const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const $=(sel,root=document)=>root.querySelector(sel);
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const uid=(p='id')=>`${p}_${Math.random().toString(36).slice(2,9)}${Date.now().toString(36).slice(-4)}`;
+  const round2=n=>Math.round(n*100)/100;
+  const fmt=(n,d=2)=>n===null||n===undefined||Number.isNaN(n)?'-':Number(n).toFixed(d);
+  const css=n=>getComputedStyle(document.body).getPropertyValue(n).trim();
+  const pad2=n=>String(n).padStart(2,'0');
 
   function pseudoRand(seed){
-    let x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
+    const x=Math.sin(seed*12.9898+78.233)*43758.5453;
+    return x-Math.floor(x);
   }
   function gaussian(seed){
-    const u = Math.max(1e-9, pseudoRand(seed));
-    const v = Math.max(1e-9, pseudoRand(seed * 1.7 + 17));
+    const u=Math.max(1e-9,pseudoRand(seed));
+    const v=Math.max(1e-9,pseudoRand(seed*1.91+17.3));
     return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
   }
+  function formatTimeUTC(ts){
+    const d=new Date(ts);
+    return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+  }
+  function formatTimeJST(ts){
+    const d=new Date(ts+9*3600*1000);
+    return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth()+1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+  }
+  function shortLabel(ts){
+    const d=new Date(ts);
+    return `${pad2(d.getUTCMonth()+1)}/${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+  }
+  function getTfStep(tf){ return tf==='M1'?1:tf==='M15'?15:60; }
+  function currentFile(){ return state.files[state.currentFileId]; }
+  function currentM1(){ return currentFile().data.M1; }
+  function currentBars(tf){ return currentFile().data[tf]; }
+  function position(){ return currentFile().tradeState; }
 
-  function generateM1Data(days=5){
-    const bars = [];
-    let base = 2340 + pseudoRand(19)*15;
-    const start = new Date('2026-05-18T00:00:00Z').getTime();
-    const total = days * 24 * 60;
+  function saveState(){
+    const safe = {
+      mode:state.mode,
+      onlineEnabled:state.onlineEnabled,
+      speedBarsPerMinute:state.speedBarsPerMinute,
+      fastMultiplierN:state.fastMultiplierN,
+      ui:state.ui,
+      fileOrder:state.fileOrder,
+      currentFileId:state.currentFileId,
+      files:state.files,
+      chart:{
+        timeframe:state.chart.timeframe,
+        viewMode:state.chart.viewMode
+      }
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
+  }
+
+  function loadState(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(!raw) return false;
+      const data=JSON.parse(raw);
+      state.mode=data.mode||'practice';
+      state.onlineEnabled=!!data.onlineEnabled;
+      state.speedBarsPerMinute=clamp(parseInt(data.speedBarsPerMinute||10,10),2,60);
+      state.fastMultiplierN=clamp(parseInt(data.fastMultiplierN||10,10),1,50);
+      state.ui=Object.assign(state.ui,data.ui||{});
+      state.fileOrder=Array.isArray(data.fileOrder)?data.fileOrder:[];
+      state.currentFileId=data.currentFileId||null;
+      state.files=data.files||{};
+      if(data.chart){
+        state.chart.timeframe=data.chart.timeframe||'M1';
+        state.chart.viewMode=data.chart.viewMode||'single';
+      }
+      for(const id of state.fileOrder){
+        const f=state.files[id];
+        if(!f) continue;
+        f.drawing=f.drawing||{lines:[]};
+        f.replay=f.replay||defaultReplay();
+        f.tradeState=f.tradeState||defaultTradeState();
+        f.trades=Array.isArray(f.trades)?f.trades:[];
+        if(!f.data?.M1 || !f.data?.M15 || !f.data?.H1){
+          const m1=generateM1Data(6, Math.floor(Math.random()*1e6));
+          f.data={M1:m1,M15:resampleBars(m1,15,'M15'),H1:resampleBars(m1,60,'H1')};
+        }
+      }
+      if(!state.currentFileId || !state.files[state.currentFileId]) throw new Error('invalid current file');
+      return true;
+    }catch(e){
+      console.warn(e);
+      localStorage.removeItem(STORAGE_KEY);
+      return false;
+    }
+  }
+
+  function defaultReplay(){
+    return {
+      currentM1:12*60,
+      furthestM1:12*60,
+      visibleCount:{M1:48,M15:36,H1:26},
+      defaultVisible:{M1:48,M15:36,H1:26},
+      centerByTf:{M1:null,M15:null,H1:null}
+    };
+  }
+  function defaultTradeState(){
+    return {
+      positionStatus:'flat',
+      side:null,
+      orderType:null,
+      entry:null,
+      entryBar:null,
+      entryTime:null,
+      sl:null,
+      tp:null,
+      pendingPrice:null,
+      risk:null,
+      markerLog:[]
+    };
+  }
+
+  function generateM1Data(days=6, seedBase=12345){
+    const bars=[];
+    const start=Date.UTC(2026,4,18,0,0,0);
+    let price=2325 + pseudoRand(seedBase)*35;
+    const total=days*24*60;
     for(let i=0;i<total;i++){
-      const ts = start + i * 60 * 1000;
-      const d = new Date(ts);
-      const h = d.getUTCHours();
-      const m = d.getUTCMinutes();
-      let session = 'asia';
-      let vol = 0.22;
-      let drift = 0;
-      if(h < 7){
-        session = 'asia';
-        vol = 0.18;
-        drift = Math.sin(i/55) * 0.012;
-      }else if(h < 13){
-        session = 'london';
-        vol = 0.52;
-        drift = Math.sin(i/24) * 0.05 + (pseudoRand(i*0.2) > 0.94 ? (pseudoRand(i)*0.5-0.25) : 0);
+      const ts=start+i*60000;
+      const d=new Date(ts);
+      const h=d.getUTCHours();
+      let vol=.18, drift=0, spikeProb=.006;
+      if(h<8){
+        vol=.16 + pseudoRand(seedBase+i*0.3)*.05;
+        drift=Math.sin((i+seedBase)/80)*.012;
+        spikeProb=.002;
+      }else if(h<13){
+        vol=.42 + pseudoRand(seedBase+i*0.7)*.16;
+        drift=Math.sin((i+seedBase)/27)*.055 + (pseudoRand(seedBase+i*2.1)-.5)*.03;
+        spikeProb=.011;
       }else{
-        session = 'ny';
-        vol = 0.68;
-        drift = Math.sin(i/18) * 0.07 + (pseudoRand(i*0.31) > 0.92 ? (pseudoRand(i+11)*1.1-0.55) : 0);
+        vol=.58 + pseudoRand(seedBase+i*1.2)*.22;
+        drift=Math.sin((i+seedBase)/19)*.07 + (pseudoRand(seedBase+i*1.7)-.5)*.05;
+        spikeProb=.014;
       }
-      if((h===12 || h===13 || h===18 || h===19) && pseudoRand(i+300) > 0.965){
-        drift += (pseudoRand(i+999)-0.5)*2.2;
-        vol *= 1.9;
-      }
-      const open = base;
-      const delta = gaussian(i+1)*vol + drift;
-      let close = open + delta;
-      const wickUp = Math.abs(gaussian(i+101))*vol*(0.5 + pseudoRand(i+91));
-      const wickDn = Math.abs(gaussian(i+231))*vol*(0.5 + pseudoRand(i+47));
-      let high = Math.max(open, close) + wickUp;
-      let low = Math.min(open, close) - wickDn;
-      if(session !== 'asia' && pseudoRand(i*1.91) > 0.988){
-        high += pseudoRand(i+77) * 2.4;
-      }
-      if(session !== 'asia' && pseudoRand(i*2.11) > 0.988){
-        low -= pseudoRand(i+88) * 2.4;
-      }
-      close = clamp(close, 2290, 2420);
-      high = Math.max(high, open, close);
-      low = Math.min(low, open, close);
+      const open=price;
+      let delta=gaussian(seedBase+i+1)*vol + drift;
+      if(pseudoRand(seedBase+i*4.1)>1-spikeProb) delta += (pseudoRand(seedBase+i*7.1)-.5)*(1.5+vol*2);
+      let close=open+delta;
+      let wickUp=Math.abs(gaussian(seedBase+i+91))*vol*(.6+pseudoRand(seedBase+i+17));
+      let wickDn=Math.abs(gaussian(seedBase+i+191))*vol*(.6+pseudoRand(seedBase+i+27));
+      let high=Math.max(open,close)+wickUp;
+      let low=Math.min(open,close)-wickDn;
+      if(pseudoRand(seedBase+i*6.2)>0.992) high += pseudoRand(seedBase+i+123)*2.8;
+      if(pseudoRand(seedBase+i*6.7)>0.992) low -= pseudoRand(seedBase+i+321)*2.8;
+      close=clamp(close,2290,2415);
+      high=Math.max(high,open,close);
+      low=Math.min(low,open,close);
       bars.push({
-        index:i, time:ts, open, high, low, close, session,
-        label: formatTime(ts)
+        index:i,time:ts,open:round2(open),high:round2(high),low:round2(low),close:round2(close),
+        labelUTC:formatTimeUTC(ts),
+        labelJST:formatTimeJST(ts)
       });
-      base = close;
+      price=close;
     }
     return bars;
   }
 
-  function resampleBars(src, step, label){
-    const out = [];
+  function resampleBars(src, step, tf){
+    const out=[];
     for(let i=0;i<src.length;i+=step){
-      const chunk = src.slice(i, i+step);
+      const chunk=src.slice(i,i+step);
       if(!chunk.length) continue;
       out.push({
-        index: out.length,
-        srcStart: i,
-        srcEnd: i + chunk.length - 1,
-        time: chunk[0].time,
-        open: chunk[0].open,
-        high: Math.max(...chunk.map(b=>b.high)),
-        low: Math.min(...chunk.map(b=>b.low)),
-        close: chunk[chunk.length-1].close,
-        session: chunk[0].session,
-        label: formatTime(chunk[0].time),
-        tf: label
+        index:out.length,
+        srcStart:i,
+        srcEnd:i+chunk.length-1,
+        time:chunk[0].time,
+        open:chunk[0].open,
+        high:Math.max(...chunk.map(b=>b.high)),
+        low:Math.min(...chunk.map(b=>b.low)),
+        close:chunk[chunk.length-1].close,
+        labelUTC:chunk[0].labelUTC,
+        labelJST:chunk[0].labelJST,
+        tf
       });
     }
     return out;
   }
 
   function createFile(name){
-    const m1 = generateM1Data(6);
-    const file = {
-      id: uid('file'),
+    const seed=Math.floor(Math.random()*1e9)+Date.now();
+    const m1=generateM1Data(6, seed);
+    return {
+      id:uid('file'),
       name,
-      data: {
-        M1: m1,
-        M15: resampleBars(m1,15,'M15'),
-        H1: resampleBars(m1,60,'H1')
+      seed,
+      data:{
+        M1:m1,
+        M15:resampleBars(m1,15,'M15'),
+        H1:resampleBars(m1,60,'H1')
       },
-      replay: {
-        currentM1: 12*60,
-        furthestM1: 12*60,
-        visibleCount: {M1:48,M15:40,H1:30},
-        centerByTf: {M1:null,M15:null,H1:null},
-        priceScaleByPane: {
-          top: {auto:true,min:null,max:null},
-          bottom: {auto:true,min:null,max:null}
-        }
-      },
-      drawing: {
-        lines: []
-      },
-      tradeState: {
-        positionStatus:'flat',
-        side:null,
-        orderType:null,
-        entry:null,
-        entryBar:null,
-        entryTime:null,
-        sl:null,
-        tp:null,
-        pendingPrice:null,
-        risk:null,
-        markerLog:[]
-      },
-      trades: []
+      replay:defaultReplay(),
+      drawing:{lines:[]},
+      tradeState:defaultTradeState(),
+      trades:[]
     };
-    return file;
   }
 
-  function setupInitialState(){
-    const f1 = createFile('XAU Sample 1');
-    const f2 = createFile('XAU Sample 2');
-    state.files[f1.id] = f1;
-    state.files[f2.id] = f2;
-    state.fileOrder = [f1.id, f2.id];
-    state.currentFileId = f1.id;
-    applyModeTheme();
+  function bootstrap(){
+    if(!loadState()){
+      const f1=createFile('XAU Sample 1');
+      const f2=createFile('XAU Sample 2');
+      state.files[f1.id]=f1;
+      state.files[f2.id]=f2;
+      state.fileOrder=[f1.id,f2.id];
+      state.currentFileId=f1.id;
+      saveState();
+    }
     syncPaneConfig();
-  }
-
-  function currentFile(){ return state.files[state.currentFileId]; }
-  function currentBars(tf){ return currentFile().data[tf]; }
-  function currentM1Bars(){ return currentFile().data.M1; }
-  function currentTradeState(){ return currentFile().tradeState; }
-
-  function applyModeTheme(){
-    document.body.classList.toggle('light', state.mode === 'review');
-  }
-
-  function syncPaneConfig(){
-    if(state.chart.viewMode === 'single'){
-      state.chart.paneConfigs = [{tf: state.chart.timeframe}];
-    }else{
-      if(state.chart.timeframe === 'M1') state.chart.paneConfigs = [{tf:'M1'},{tf:'M15'}];
-      else state.chart.paneConfigs = [{tf:'M15'},{tf:'H1'}];
-    }
-    els.paneTopLabel.textContent = state.chart.paneConfigs[0].tf;
-    els.paneBottomLabel.textContent = state.chart.paneConfigs[1] ? state.chart.paneConfigs[1].tf : '';
-    els.paneBottom.style.display = state.chart.viewMode === 'split' ? 'block' : 'none';
-  }
-
-  function getTfStep(tf){
-    if(tf==='M1') return 1;
-    if(tf==='M15') return 15;
-    return 60;
-  }
-
-  function getVisibleRange(tf){
-    const file = currentFile();
-    const bars = file.data[tf];
-    const step = getTfStep(tf);
-    let center = file.replay.centerByTf[tf];
-    if(center == null){
-      center = Math.floor(file.replay.currentM1 / step);
-      file.replay.centerByTf[tf] = center;
-    }
-    const vis = file.replay.visibleCount[tf];
-    let start = Math.round(center - vis/2);
-    let end = start + vis - 1;
-    const maxVisibleIdx = Math.floor(file.replay.currentM1 / step);
-    end = Math.min(end, maxVisibleIdx);
-    start = Math.max(0, end - vis + 1);
-    end = Math.min(bars.length - 1, Math.max(start, end));
-    return {start,end,center,vis,maxVisibleIdx};
-  }
-
-  function getCurrentPrice(){
-    const i = currentFile().replay.currentM1;
-    const bars = currentM1Bars();
-    const idx = clamp(i,0,bars.length-1);
-    return bars[idx].close;
-  }
-
-  function roundPrice(p){ return Math.round(p * 100) / 100; }
-
-  function findBarIndexBySession(session){
-    const bars = currentM1Bars();
-    const targets = {asia:2, london:9, ny:15};
-    const h = targets[session] ?? 9;
-    for(let i=0;i<bars.length;i++){
-      const d = new Date(bars[i].time);
-      if(d.getUTCHours() === h && d.getUTCMinutes() === 0) return i;
-    }
-    return 0;
-  }
-
-  function jumpToSession(session){
-    const file = currentFile();
-    const idx = findBarIndexBySession(session);
-    file.replay.currentM1 = idx;
-    if(state.mode === 'practice') file.replay.furthestM1 = Math.max(file.replay.furthestM1, idx);
-    Object.keys(file.replay.centerByTf).forEach(tf=>{
-      file.replay.centerByTf[tf] = Math.floor(idx / getTfStep(tf));
-    });
+    applyTheme();
+    bindEvents();
+    updateHeaderUI();
     renderAll();
   }
 
+  function applyTheme(){
+    document.body.classList.toggle('light', state.mode==='review');
+  }
+
+  function syncPaneConfig(){
+    if(state.chart.viewMode==='single'){
+      state.chart.paneConfigs=[{tf:state.chart.timeframe}];
+    }else{
+      state.chart.paneConfigs = state.chart.timeframe==='M1'
+        ? [{tf:'M1'},{tf:'M15'}]
+        : [{tf:'M15'},{tf:'H1'}];
+    }
+    els.paneTopLabel.textContent=state.chart.paneConfigs[0].tf;
+    els.paneBottomLabel.textContent=state.chart.paneConfigs[1]?.tf||'';
+    els.paneBottom.style.display=state.chart.viewMode==='split'?'block':'none';
+    const md=state.mode==='practice'?'練習':'検証';
+    els.modeBadgeTop.textContent=md;
+    els.modeBadgeBottom.textContent=md;
+  }
+
+  function updateHeaderUI(){
+    $$('#modeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.mode));
+    $$('#viewSeg button').forEach(b=>b.classList.toggle('active', b.dataset.view===state.chart.viewMode));
+    $$('#tfSeg button').forEach(b=>b.classList.toggle('active', b.dataset.tf===state.chart.timeframe));
+    els.fileNameLabel.textContent=currentFile().name;
+    els.speedRange.value=state.speedBarsPerMinute;
+    els.speedLabelText.textContent=`${state.speedBarsPerMinute}本/分`;
+    els.fastInput.value=state.fastMultiplierN;
+    els.fastInputSheet.value=state.fastMultiplierN;
+    els.backBtn.disabled=state.mode==='practice';
+    els.backBtn.classList.toggle('disabled', state.mode==='practice');
+    els.netSwitch.classList.toggle('on', state.onlineEnabled);
+    els.slotModeSwitch.classList.toggle('on', state.ui.slotDetail);
+    els.doubleDeleteSwitch.classList.toggle('on', !!state.ui.lineDoubleDelete);
+    const setMode = state.ui.setMode;
+    els.slModeBtn.classList.toggle('active', setMode==='sl');
+    els.tpModeBtn.classList.toggle('active', setMode==='tp');
+    els.playStateLabel.textContent=state.fastMode?`高速 x${state.fastMultiplierN}`:state.isPlaying?`再生中 ${state.speedBarsPerMinute}本/分`:'停止中';
+  }
+
   function setScreen(screen){
-    state.screen = screen;
+    state.screen=screen;
     els.chartScreen.classList.toggle('active', screen==='chart');
     els.statsScreen.classList.toggle('active', screen==='stats');
     if(screen==='stats') renderStatsScreen();
-    if(screen==='chart') renderAll();
+    if(screen==='chart') renderChart();
+    saveState();
+  }
+
+  function askConfirm(title,message,onOk){
+    els.confirmTitle.textContent=title;
+    els.confirmMessage.textContent=message;
+    state.transient.confirmHandler=onOk;
+    els.confirmModal.classList.add('active');
+  }
+
+  function closeConfirm(){
+    els.confirmModal.classList.remove('active');
+    state.transient.confirmHandler=null;
   }
 
   function openMenu(){ els.menuOverlay.classList.add('active'); }
   function closeMenu(){ els.menuOverlay.classList.remove('active'); }
-  function openSheet(){ 
-    updateOrderSheetFields();
-    els.orderSheet.classList.add('active'); 
+  function openSheet(){
+    syncOrderSheet();
+    els.orderSheet.classList.add('active');
   }
   function closeSheet(){ els.orderSheet.classList.remove('active'); }
-
-  let confirmHandler = null;
-  function askConfirm(title, message, onOk){
-    els.confirmTitle.textContent = title;
-    els.confirmMessage.textContent = message;
-    confirmHandler = onOk;
-    els.confirmModal.classList.add('active');
+  function openManageSheet(){
+    const ts=position();
+    els.manageSlInput.value=ts.sl!=null?fmt(ts.sl,2):'';
+    els.manageTpInput.value=ts.tp!=null?fmt(ts.tp,2):'';
+    els.cancelOrCloseBtn.textContent=ts.positionStatus==='pending'?'注文取消':'クローズ';
+    els.manageSheet.classList.add('active');
   }
-  function closeConfirm(){ els.confirmModal.classList.remove('active'); confirmHandler = null; }
+  function closeManageSheet(){ els.manageSheet.classList.remove('active'); }
+  function closeCtxMenu(){ els.lineContextMenu.classList.remove('active'); }
 
-  function setMode(nextMode){
-    if(state.mode === nextMode) return;
-    askConfirm('モード切替', `${nextMode === 'practice' ? '練習' : '検証'}モードへ切り替えますか？`, () => {
-      state.mode = nextMode;
-      applyModeTheme();
-      updateTopSegs();
+  function switchMode(next){
+    if(next===state.mode) return;
+    askConfirm('モード切替', `${next==='practice'?'練習':'検証'}モードへ切り替えますか？`, ()=>{
+      state.mode=next;
+      applyTheme();
+      updateHeaderUI();
       renderAll();
-      renderStatsScreen();
+      saveState();
     });
   }
 
-  function updateTopSegs(){
-    $$('#modeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.mode));
-    $$('#tfSeg button').forEach(b=>b.classList.toggle('active', b.dataset.tf===state.chart.timeframe));
-    $$('#viewSeg button').forEach(b=>b.classList.toggle('active', b.dataset.view===state.chart.viewMode));
-    els.backBtn.disabled = state.mode === 'practice';
-    els.backBtn.classList.toggle('disabled', state.mode === 'practice');
-    els.fileNameLabel.textContent = currentFile().name;
-    els.netSwitch.classList.toggle('on', state.onlineEnabled);
-    els.slotModeSwitch.classList.toggle('on', state.ui.slotDetail);
+  function switchViewMode(v){
+    state.chart.viewMode=v;
+    if(v==='split' && state.chart.timeframe==='H1') state.chart.timeframe='M15';
+    syncPaneConfig();
+    updateHeaderUI();
+    renderChart();
+    saveState();
   }
 
   function switchTimeframe(tf){
-    state.chart.timeframe = tf;
-    if(state.chart.viewMode === 'split' && tf === 'H1'){
-      state.chart.viewMode = 'single';
-    }
+    state.chart.timeframe=tf;
+    if(state.chart.viewMode==='split' && tf==='H1') state.chart.viewMode='single';
     syncPaneConfig();
-    updateTopSegs();
-    renderAll();
+    updateHeaderUI();
+    renderChart();
+    saveState();
   }
 
-  function switchViewMode(mode){
-    state.chart.viewMode = mode;
-    if(mode === 'split' && state.chart.timeframe === 'H1'){
-      state.chart.timeframe = 'M15';
+  function jumpToSession(session){
+    const targetHour=session==='asia'?0:session==='london'?8:13;
+    const bars=currentM1();
+    let idx=0;
+    for(let i=0;i<bars.length;i++){
+      const d=new Date(bars[i].time);
+      if(d.getUTCHours()===targetHour && d.getUTCMinutes()===0){ idx=i; break; }
     }
-    syncPaneConfig();
-    updateTopSegs();
+    const file=currentFile();
+    file.replay.currentM1=idx;
+    file.replay.furthestM1=Math.max(file.replay.furthestM1, idx);
+    ['M1','M15','H1'].forEach(tf=>file.replay.centerByTf[tf]=Math.floor(idx/getTfStep(tf)));
     renderAll();
+    saveState();
   }
 
-  function getPositionSummary(){
-    const ts = currentTradeState();
-    if(ts.positionStatus === 'flat') return 'Flat';
-    if(ts.positionStatus === 'pending') return `Pending ${ts.orderType} @ ${fmt(ts.pendingPrice,2)}`;
-    return `Open ${String(ts.side).toUpperCase()} @ ${fmt(ts.entry,2)}`;
+  function getCurrentPrice(){
+    const bars=currentM1();
+    const idx=clamp(currentFile().replay.currentM1,0,bars.length-1);
+    return bars[idx].close;
   }
 
-  function addMarker(type, price, m1Index, extra={}){
-    currentTradeState().markerLog.push({
-      id: uid('m'),
-      type, price, m1Index, ...extra
-    });
+  function getVisibleRange(tf){
+    const file=currentFile();
+    const step=getTfStep(tf);
+    const vis=file.replay.visibleCount[tf];
+    const maxIdx=Math.floor(file.replay.currentM1/step);
+    let center=file.replay.centerByTf[tf];
+    if(center==null) center=maxIdx;
+    center=clamp(center, Math.floor(vis/2), Math.max(Math.floor(vis/2), maxIdx));
+    let start=Math.round(center-vis/2);
+    let end=start+vis-1;
+    end=Math.min(end, maxIdx);
+    start=Math.max(0, end-vis+1);
+    return {start,end,vis,maxIdx,center};
   }
 
-  function createTradeRecordBase(side, entry, sl, tp, openBar, openTime){
-    const risk = (sl != null) ? Math.abs(entry - sl) : null;
-    const d = new Date(currentM1Bars()[openBar].time);
-    return {
-      id: uid('trade'),
-      side,
-      entry: roundPrice(entry),
-      sl: sl != null ? roundPrice(sl) : null,
-      tp: tp != null ? roundPrice(tp) : null,
-      openBar,
-      closeBar: openBar,
-      openTime,
-      closeTime: openTime,
-      closePrice: roundPrice(entry),
-      closeReason: 'manual',
-      status: 'closed_manual',
-      risk: risk != null ? roundPrice(risk) : null,
-      pnl: 0,
-      resultR: null,
-      entrySession: getSessionFromHour(d.getUTCHours()),
-      entryHour: d.getUTCHours(),
-      entrySlot10m: d.getUTCHours()*6 + Math.floor(d.getUTCMinutes()/10)
-    };
+  function resizeCanvas(canvas){
+    const rect=canvas.getBoundingClientRect();
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const w=Math.max(10,Math.round(rect.width*dpr));
+    const h=Math.max(10,Math.round(rect.height*dpr));
+    if(canvas.width!==w||canvas.height!==h){ canvas.width=w; canvas.height=h; }
   }
 
-  function openMarket(side){
-    const ts = currentTradeState();
-    if(ts.positionStatus !== 'flat') return;
-    const i = currentFile().replay.currentM1;
-    const price = getCurrentPrice();
-    ts.positionStatus = 'open';
-    ts.side = side;
-    ts.orderType = 'market_' + side;
-    ts.entry = price;
-    ts.entryBar = i;
-    ts.entryTime = currentM1Bars()[i].label;
-    ts.pendingPrice = null;
-    ts.risk = ts.sl != null ? Math.abs(ts.entry - ts.sl) : null;
-    addMarker('entry', price, i, {side});
+  function ensureCenterVisible(tf){
+    const file=currentFile();
+    const range=getVisibleRange(tf);
+    file.replay.centerByTf[tf]=range.center;
+  }
+
+  function addLine(price){
+    const file=currentFile();
+    const line={id:uid('line'),type:'analysis',price:round2(price)};
+    file.drawing.lines.push(line);
+    state.selectedLineId=line.id;
+    syncOrderSheet();
+    renderChart();
+    saveState();
+  }
+  function selectedLine(){
+    return currentFile().drawing.lines.find(l=>l.id===state.selectedLineId)||null;
+  }
+  function deleteLine(lineId){
+    currentFile().drawing.lines=currentFile().drawing.lines.filter(l=>l.id!==lineId);
+    if(state.selectedLineId===lineId) state.selectedLineId=null;
+    closeCtxMenu();
+    syncOrderSheet();
+    renderChart();
+    saveState();
+  }
+
+  function setPositionStatusText(){
+    const ts=position();
+    const cp=getCurrentPrice();
+    let text='なし';
+    if(ts.positionStatus==='flat') text='flat';
+    else if(ts.positionStatus==='pending'){
+      text=`${ts.orderType} @ ${fmt(ts.pendingPrice,2)} / SL ${fmt(ts.sl,2)} / TP ${fmt(ts.tp,2)}`;
+    }else if(ts.positionStatus==='open'){
+      const r=unrealizedR(cp);
+      text=`${ts.side.toUpperCase()} @ ${fmt(ts.entry,2)} / ${ts.entryTime || '-'} / SL ${fmt(ts.sl,2)} / TP ${fmt(ts.tp,2)} / ${r==null?'-':(r>=0?'+':'')+fmt(r,2)+'R'}`;
+    }
+    els.posStateText.textContent=ts.positionStatus;
+    els.posInfoText.textContent=text;
+    const flat=ts.positionStatus!=='flat';
+    els.manageOrderBtn.disabled=!flat;
+    els.sellBtn.disabled=flat;
+    els.buyBtn.disabled=flat;
+    els.closeBtn.disabled=ts.positionStatus!=='open';
+  }
+
+  function unrealizedR(curPrice){
+    const ts=position();
+    if(ts.positionStatus!=='open' || ts.entry==null) return null;
+    const pnl=ts.side==='buy' ? curPrice-ts.entry : ts.entry-curPrice;
+    return ts.risk ? pnl/ts.risk : null;
+  }
+
+  function marketOpen(side){
+    const ts=position();
+    if(ts.positionStatus!=='flat') return;
+    const idx=currentFile().replay.currentM1;
+    const price=getCurrentPrice();
+    ts.positionStatus='open';
+    ts.side=side;
+    ts.orderType=`market_${side}`;
+    ts.entry=round2(price);
+    ts.entryBar=idx;
+    ts.entryTime=currentM1()[idx].labelUTC;
+    ts.pendingPrice=null;
+    ts.risk = ts.sl!=null ? round2(Math.abs(ts.entry-ts.sl)) : null;
+    ts.markerLog.push({id:uid('mk'),type:'entry',m1Index:idx,price:ts.entry,side});
     renderAll();
+    saveState();
   }
 
   function placePending(orderType, price){
-    const ts = currentTradeState();
-    if(ts.positionStatus !== 'flat') return;
-    ts.positionStatus = 'pending';
-    ts.orderType = orderType;
-    ts.side = orderType.includes('buy') ? 'buy' : 'sell';
-    ts.pendingPrice = price;
-    ts.entry = null;
-    ts.entryBar = null;
-    ts.entryTime = null;
-    ts.risk = null;
-    addMarker('pending', price, currentFile().replay.currentM1, {side:ts.side});
+    const ts=position();
+    if(ts.positionStatus!=='flat') return;
+    ts.positionStatus='pending';
+    ts.orderType=orderType;
+    ts.side=orderType.includes('buy')?'buy':'sell';
+    ts.pendingPrice=round2(price);
+    ts.entry=null;
+    ts.entryBar=null;
+    ts.entryTime=null;
+    ts.risk=null;
+    ts.markerLog.push({id:uid('mk'),type:'pending',m1Index:currentFile().replay.currentM1,price:ts.pendingPrice,side:ts.side});
     renderAll();
+    saveState();
   }
 
-  function manualClose(){
-    const ts = currentTradeState();
-    if(ts.positionStatus !== 'open') return;
-    closeTrade('manual', getCurrentPrice());
+  function buildTradeRecord(reason, closePrice){
+    const ts=position();
+    if(ts.positionStatus!=='open') return null;
+    const closeBar=currentFile().replay.currentM1;
+    const openBar=ts.entryBar;
+    const openTs=currentM1()[openBar].time;
+    const closeTs=currentM1()[closeBar].time;
+    const jstOpen=new Date(openTs+9*3600*1000);
+    const risk=ts.sl!=null ? Math.abs(ts.entry-ts.sl) : null;
+    const pnl = ts.side==='buy' ? closePrice-ts.entry : ts.entry-closePrice;
+    return {
+      id:uid('trade'),
+      side:ts.side,
+      entry:round2(ts.entry),
+      sl:ts.sl!=null?round2(ts.sl):null,
+      tp:ts.tp!=null?round2(ts.tp):null,
+      openBar,
+      closeBar,
+      openTime:currentM1()[openBar].labelUTC,
+      closeTime:currentM1()[closeBar].labelUTC,
+      closePrice:round2(closePrice),
+      closeReason:reason,
+      status:reason==='tp'?'closed_tp':reason==='sl'?'closed_sl':'closed_manual',
+      risk:risk!=null?round2(risk):null,
+      pnl:round2(pnl),
+      resultR:risk?round2(pnl/risk):null,
+      entryHourJST:jstOpen.getUTCHours(),
+      entryMinuteJST:jstOpen.getUTCMinutes(),
+      entrySlot1h:jstOpen.getUTCHours(),
+      entrySlot10m:jstOpen.getUTCHours()*6+Math.floor(jstOpen.getUTCMinutes()/10)
+    };
   }
 
-  function closeTrade(reason, closePrice){
-    const file = currentFile();
-    const ts = file.tradeState;
-    if(ts.positionStatus !== 'open') return;
-    const closeBar = file.replay.currentM1;
-    const closeTime = currentM1Bars()[closeBar].label;
-    const tr = createTradeRecordBase(ts.side, ts.entry, ts.sl, ts.tp, ts.entryBar, ts.entryTime);
-    tr.closeBar = closeBar;
-    tr.closeTime = closeTime;
-    tr.closePrice = roundPrice(closePrice);
-    tr.closeReason = reason;
-    tr.status = reason === 'tp' ? 'closed_tp' : reason === 'sl' ? 'closed_sl' : 'closed_manual';
-    tr.pnl = roundPrice(ts.side === 'buy' ? (closePrice - ts.entry) : (ts.entry - closePrice));
-    tr.resultR = tr.risk ? roundPrice(tr.pnl / tr.risk) : null;
-    file.trades.push(tr);
-    addMarker('exit', closePrice, closeBar, {reason});
-    ts.positionStatus = 'flat';
-    ts.side = null;
-    ts.orderType = null;
-    ts.entry = null;
-    ts.entryBar = null;
-    ts.entryTime = null;
-    ts.risk = null;
-    ts.pendingPrice = null;
-    ts.sl = null;
-    ts.tp = null;
-  }
-
-  function maybeFillPending(m1bar){
-    const ts = currentTradeState();
-    if(ts.positionStatus !== 'pending') return;
-    const p = ts.pendingPrice;
-    let hit = false;
-    if(ts.orderType === 'buy_limit' && m1bar.low <= p) hit = true;
-    if(ts.orderType === 'sell_limit' && m1bar.high >= p) hit = true;
-    if(ts.orderType === 'buy_stop' && m1bar.high >= p) hit = true;
-    if(ts.orderType === 'sell_stop' && m1bar.low <= p) hit = true;
-    if(hit){
-      ts.positionStatus = 'open';
-      ts.entry = p;
-      ts.entryBar = m1bar.index;
-      ts.entryTime = m1bar.label;
-      ts.risk = ts.sl != null ? Math.abs(ts.entry - ts.sl) : null;
-      addMarker('entry', p, m1bar.index, {side: ts.side, pendingFill:true});
-    }
-  }
-
-  function maybeHitSlTp(m1bar){
-    const ts = currentTradeState();
-    if(ts.positionStatus !== 'open') return;
-    const isBuy = ts.side === 'buy';
-    const sl = ts.sl;
-    const tp = ts.tp;
-    let slHit = false, tpHit = false;
-    if(isBuy){
-      if(sl != null && m1bar.low <= sl) slHit = true;
-      if(tp != null && m1bar.high >= tp) tpHit = true;
-    }else{
-      if(sl != null && m1bar.high >= sl) slHit = true;
-      if(tp != null && m1bar.low <= tp) tpHit = true;
-    }
-    if(slHit){
-      closeTrade('sl', sl);
-    }else if(tpHit){
-      closeTrade('tp', tp);
-    }
-  }
-
-  function stepReplay(n=1, forward=true){
-    const file = currentFile();
-    const bars = currentM1Bars();
-    if(forward){
-      for(let k=0;k<n;k++){
-        if(file.replay.currentM1 >= bars.length - 1) break;
-        file.replay.currentM1++;
-        const bar = bars[file.replay.currentM1];
-        maybeFillPending(bar);
-        maybeHitSlTp(bar);
-      }
-      file.replay.furthestM1 = Math.max(file.replay.furthestM1, file.replay.currentM1);
-    }else{
-      if(state.mode === 'practice') return;
-      file.replay.currentM1 = Math.max(0, file.replay.currentM1 - n);
-    }
-    Object.keys(file.replay.centerByTf).forEach(tf=>{
-      const vis = file.replay.visibleCount[tf];
-      const maxVisibleIdx = Math.floor(file.replay.currentM1 / getTfStep(tf));
-      const curCenter = file.replay.centerByTf[tf] ?? maxVisibleIdx;
-      if(maxVisibleIdx > curCenter - vis/4){
-        file.replay.centerByTf[tf] = maxVisibleIdx - Math.floor(vis*0.25);
-      }else{
-        file.replay.centerByTf[tf] = clamp(curCenter, Math.floor(vis/2), Math.max(Math.floor(vis/2), maxVisibleIdx));
-      }
-    });
+  function closeOpenPosition(reason='manual', priceOverride=null){
+    const ts=position();
+    if(ts.positionStatus!=='open') return false;
+    const closePrice = round2(priceOverride!=null ? priceOverride : getCurrentPrice());
+    const record=buildTradeRecord(reason, closePrice);
+    if(!record) return false;
+    currentFile().trades.push(record);
+    ts.markerLog.push({id:uid('mk'),type:'exit',m1Index:currentFile().replay.currentM1,price:closePrice,reason});
+    ts.positionStatus='flat';
+    ts.side=null;
+    ts.orderType=null;
+    ts.entry=null;
+    ts.entryBar=null;
+    ts.entryTime=null;
+    ts.pendingPrice=null;
+    ts.risk=null;
+    ts.sl=null;
+    ts.tp=null;
     renderAll();
-  }
-
-  function playStart(){
-    stopPlay();
-    state.isPlaying = true;
-    state.fastMode = false;
-    const interval = Math.max(80, 60000 / state.speedBarsPerMinute);
-    state.playTimer = setInterval(()=>stepReplay(1,true), interval);
-    renderAll();
-  }
-
-  function stopPlay(){
-    state.isPlaying = false;
-    state.fastMode = false;
-    if(state.playTimer) clearInterval(state.playTimer);
-    state.playTimer = null;
-    renderAll();
-  }
-
-  function startFastForward(){
-    stopPlay();
-    state.isPlaying = true;
-    state.fastMode = true;
-    const minTf = state.chart.viewMode === 'split'
-      ? (state.chart.paneConfigs[0].tf === 'M1' ? 1 : 15)
-      : getTfStep(state.chart.timeframe);
-    const barsPerSec = clamp(minTf * state.fastMultiplierN, 1, 1200);
-    const interval = 100;
-    const perTick = Math.max(1, Math.round(barsPerSec / 10));
-    state.playTimer = setInterval(()=>stepReplay(perTick,true), interval);
-    renderAll();
-  }
-
-  function axisLongPressCreateLine(price){
-    const file = currentFile();
-    file.drawing.lines.push({
-      id: uid('line'),
-      type:'analysis',
-      price: roundPrice(price)
-    });
-    state.selectedLineId = file.drawing.lines[file.drawing.lines.length-1].id;
-    updateOrderSheetFields();
-    renderAll();
-  }
-
-  function deleteSelectedLine(){
-    const file = currentFile();
-    if(!state.selectedLineId) return;
-    file.drawing.lines = file.drawing.lines.filter(l=>l.id !== state.selectedLineId);
-    state.selectedLineId = null;
-    updateOrderSheetFields();
-    renderAll();
-  }
-
-  function lineById(){
-    const file = currentFile();
-    return file.drawing.lines.find(l=>l.id === state.selectedLineId) || null;
-  }
-
-  function updateOrderSheetFields(){
-    const line = lineById();
-    els.selectedLineInfo.textContent = line ? `選択ライン: ${fmt(line.price,2)}` : '選択ライン: なし';
-    els.orderPriceInput.value = line ? fmt(line.price,2) : fmt(getCurrentPrice(),2);
-    const ts = currentTradeState();
-    els.slInput.value = ts.sl != null ? fmt(ts.sl,2) : '';
-    els.tpInput.value = ts.tp != null ? fmt(ts.tp,2) : '';
-    els.speedInput.value = state.speedBarsPerMinute;
-    els.fastNInput.value = state.fastMultiplierN;
-  }
-
-  function applyOrderFromSheet(){
-    const type = els.orderTypeSelect.value;
-    const price = parseFloat(els.orderPriceInput.value);
-    const sl = els.slInput.value === '' ? null : parseFloat(els.slInput.value);
-    const tp = els.tpInput.value === '' ? null : parseFloat(els.tpInput.value);
-    state.speedBarsPerMinute = clamp(parseInt(els.speedInput.value || '10',10),2,120);
-    state.fastMultiplierN = clamp(parseInt(els.fastNInput.value || '10',10),1,50);
-    const ts = currentTradeState();
-    ts.sl = Number.isFinite(sl) ? sl : null;
-    ts.tp = Number.isFinite(tp) ? tp : null;
-    if(type === 'market_buy') openMarket('buy');
-    else if(type === 'market_sell') openMarket('sell');
-    else if(Number.isFinite(price)) placePending(type, price);
-    closeSheet();
-    renderAll();
-  }
-
-  function setSlTpFromLine(){
-    const line = lineById();
-    if(!line) return;
-    const ts = currentTradeState();
-    const cp = getCurrentPrice();
-    if(ts.positionStatus === 'open' || ts.positionStatus === 'pending'){
-      if((ts.side || 'buy') === 'buy'){
-        if(line.price < (ts.entry ?? cp)) ts.sl = line.price;
-        else ts.tp = line.price;
-      }else{
-        if(line.price > (ts.entry ?? cp)) ts.sl = line.price;
-        else ts.tp = line.price;
-      }
-    }else{
-      if(line.price < cp) ts.sl = line.price;
-      else ts.tp = line.price;
-    }
-    updateOrderSheetFields();
-    renderAll();
+    saveState();
+    return true;
   }
 
   function clearPending(){
-    const ts = currentTradeState();
-    if(ts.positionStatus === 'pending'){
-      ts.positionStatus = 'flat';
-      ts.side = null;
-      ts.orderType = null;
-      ts.pendingPrice = null;
-      ts.entry = null;
-      ts.entryBar = null;
-      ts.entryTime = null;
-      ts.risk = null;
-      renderAll();
+    const ts=position();
+    if(ts.positionStatus!=='pending') return;
+    ts.positionStatus='flat';
+    ts.side=null;
+    ts.orderType=null;
+    ts.pendingPrice=null;
+    ts.entry=null;
+    ts.entryBar=null;
+    ts.entryTime=null;
+    ts.risk=null;
+    renderAll();
+    saveState();
+  }
+
+  function maybeFillPending(bar){
+    const ts=position();
+    if(ts.positionStatus!=='pending') return;
+    const p=ts.pendingPrice;
+    let hit=false;
+    if(ts.orderType==='buy_limit' && bar.low<=p) hit=true;
+    if(ts.orderType==='sell_limit' && bar.high>=p) hit=true;
+    if(ts.orderType==='buy_stop' && bar.high>=p) hit=true;
+    if(ts.orderType==='sell_stop' && bar.low<=p) hit=true;
+    if(hit){
+      ts.positionStatus='open';
+      ts.entry=round2(p);
+      ts.entryBar=bar.index;
+      ts.entryTime=bar.labelUTC;
+      ts.risk=ts.sl!=null ? round2(Math.abs(ts.entry-ts.sl)) : null;
+      ts.markerLog.push({id:uid('mk'),type:'entry',m1Index:bar.index,price:ts.entry,side:ts.side,pendingFill:true});
     }
   }
 
-  function renderStatusBar(){
-    const ts = currentTradeState();
-    els.statusLeft.textContent = getPositionSummary();
-    els.statusMid.textContent = `価格 ${fmt(getCurrentPrice(),2)} / ${currentM1Bars()[currentFile().replay.currentM1].label}`;
-    els.statusRight.textContent = `SL ${fmt(ts.sl,2)} / TP ${fmt(ts.tp,2)}`;
-    els.speedLabel.textContent = state.fastMode
-      ? `高速 x${state.fastMultiplierN}`
-      : `通常 ${state.speedBarsPerMinute}本/分`;
+  function maybeHitSlTp(bar){
+    const ts=position();
+    if(ts.positionStatus!=='open') return;
+    const isBuy=ts.side==='buy';
+    const sl=ts.sl, tp=ts.tp;
+    let slHit=false, tpHit=false;
+    if(isBuy){
+      if(sl!=null && bar.low<=sl) slHit=true;
+      if(tp!=null && bar.high>=tp) tpHit=true;
+    }else{
+      if(sl!=null && bar.high>=sl) slHit=true;
+      if(tp!=null && bar.low<=tp) tpHit=true;
+    }
+    if(slHit) closeOpenPosition('sl', sl);
+    else if(tpHit) closeOpenPosition('tp', tp);
+  }
+
+  function stepReplay(n=1, forward=true){
+    const file=currentFile();
+    const bars=currentM1();
+    if(forward){
+      for(let i=0;i<n;i++){
+        if(file.replay.currentM1>=bars.length-1) break;
+        file.replay.currentM1++;
+        const bar=bars[file.replay.currentM1];
+        maybeFillPending(bar);
+        maybeHitSlTp(bar);
+      }
+      file.replay.furthestM1=Math.max(file.replay.furthestM1,file.replay.currentM1);
+    }else{
+      if(state.mode==='practice') return;
+      file.replay.currentM1=Math.max(0,file.replay.currentM1-n);
+    }
+    ['M1','M15','H1'].forEach(tf=>{
+      const step=getTfStep(tf);
+      const maxIdx=Math.floor(file.replay.currentM1/step);
+      const vis=file.replay.visibleCount[tf];
+      const cur=file.replay.centerByTf[tf] ?? maxIdx;
+      if(maxIdx > cur - Math.floor(vis*0.2)){
+        file.replay.centerByTf[tf]=Math.max(Math.floor(vis/2), maxIdx-Math.floor(vis*0.25));
+      }else{
+        file.replay.centerByTf[tf]=clamp(cur,Math.floor(vis/2),Math.max(Math.floor(vis/2),maxIdx));
+      }
+    });
+    renderAll();
+    saveState();
+  }
+
+  function stopPlay(){
+    state.isPlaying=false;
+    state.fastMode=false;
+    if(state.playTimer){ clearInterval(state.playTimer); state.playTimer=null; }
+    updateHeaderUI();
+  }
+  function startPlay(){
+    stopPlay();
+    state.isPlaying=true;
+    state.fastMode=false;
+    const interval=Math.max(80, Math.round(60000/state.speedBarsPerMinute));
+    state.playTimer=setInterval(()=>stepReplay(1,true), interval);
+    updateHeaderUI();
+  }
+  function startFastForward(){
+    stopPlay();
+    state.isPlaying=true;
+    state.fastMode=true;
+    const minTf = state.chart.viewMode==='split'
+      ? (state.chart.paneConfigs[0].tf==='M1'?1:15)
+      : getTfStep(state.chart.timeframe);
+    const barsPerSec=clamp(minTf*state.fastMultiplierN,1,1200);
+    const interval=100;
+    const perTick=Math.max(1,Math.round(barsPerSec/10));
+    state.playTimer=setInterval(()=>stepReplay(perTick,true), interval);
+    updateHeaderUI();
+  }
+
+  function setSlOrTpByTap(price){
+    const ts=position();
+    if(!['pending','open'].includes(ts.positionStatus)) return false;
+    if(state.ui.setMode==='sl') ts.sl=round2(price);
+    else if(state.ui.setMode==='tp') ts.tp=round2(price);
+    else return false;
+    if(ts.positionStatus==='open' && ts.entry!=null && ts.sl!=null) ts.risk=round2(Math.abs(ts.entry-ts.sl));
+    state.ui.setMode=null;
+    updateHeaderUI();
+    renderChart();
+    saveState();
+    return true;
+  }
+
+  function syncOrderSheet(){
+    const line=selectedLine();
+    els.selectedLineInfo.textContent=line?`選択ライン: ${fmt(line.price,2)}`:'選択ライン: なし';
+    const ts=position();
+    els.orderPriceInput.value=line?fmt(line.price,2):fmt(getCurrentPrice(),2);
+    els.slInput.value=ts.sl!=null?fmt(ts.sl,2):'';
+    els.tpInput.value=ts.tp!=null?fmt(ts.tp,2):'';
+    els.fastInputSheet.value=state.fastMultiplierN;
+  }
+
+  function applyOrderSheet(){
+    const type=els.orderTypeSelect.value;
+    const price=parseFloat(els.orderPriceInput.value);
+    const sl=els.slInput.value===''?null:parseFloat(els.slInput.value);
+    const tp=els.tpInput.value===''?null:parseFloat(els.tpInput.value);
+    state.fastMultiplierN=clamp(parseInt(els.fastInputSheet.value||state.fastMultiplierN,10),1,50);
+    els.fastInput.value=state.fastMultiplierN;
+    const ts=position();
+    ts.sl=Number.isFinite(sl)?round2(sl):null;
+    ts.tp=Number.isFinite(tp)?round2(tp):null;
+    if(type==='market_buy') marketOpen('buy');
+    else if(type==='market_sell') marketOpen('sell');
+    else if(Number.isFinite(price)) placePending(type, price);
+    closeSheet();
+    renderAll();
+    saveState();
+  }
+
+  function setSlTpFromLine(){
+    const line=selectedLine();
+    if(!line) return;
+    const ts=position();
+    const base=ts.entry ?? getCurrentPrice();
+    const side=ts.side || 'buy';
+    if(side==='buy'){
+      if(line.price < base) ts.sl=round2(line.price);
+      else ts.tp=round2(line.price);
+    }else{
+      if(line.price > base) ts.sl=round2(line.price);
+      else ts.tp=round2(line.price);
+    }
+    if(ts.positionStatus==='open' && ts.sl!=null) ts.risk=round2(Math.abs(ts.entry-ts.sl));
+    syncOrderSheet();
+    renderAll();
+    saveState();
   }
 
   function drawChart(canvas, paneKey, tf){
-    const file = currentFile();
-    const bars = file.data[tf];
-    const range = getVisibleRange(tf);
-    const visible = bars.slice(range.start, range.end + 1);
     resizeCanvas(canvas);
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const axisW = state.chart.priceAxisWidth;
-    const plotW = w - axisW;
+    const ctx=canvas.getContext('2d');
+    const w=canvas.width, h=canvas.height;
     ctx.clearRect(0,0,w,h);
-
-    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg');
+    ctx.fillStyle=css('--bg');
     ctx.fillRect(0,0,w,h);
 
+    const file=currentFile();
+    const bars=currentBars(tf);
+    ensureCenterVisible(tf);
+    const range=getVisibleRange(tf);
+    const visible=bars.slice(range.start, range.end+1);
     if(!visible.length) return;
+    const plotW=w-state.chart.priceAxisWidth;
+    let min=Math.min(...visible.map(b=>b.low));
+    let max=Math.max(...visible.map(b=>b.high));
+    const ts=position();
+    [ts.entry, ts.sl, ts.tp, ts.pendingPrice].forEach(v=>{
+      if(v!=null){ min=Math.min(min,v); max=Math.max(max,v); }
+    });
+    file.drawing.lines.forEach(l=>{ min=Math.min(min,l.price); max=Math.max(max,l.price); });
+    const pad=(max-min)*0.12 || 1;
+    min-=pad; max+=pad;
 
-    let min = Math.min(...visible.map(b=>b.low));
-    let max = Math.max(...visible.map(b=>b.high));
-    const pad = (max-min) * 0.12 || 1;
-    min -= pad;
-    max += pad;
-
-    ctx.strokeStyle = css('--line');
-    ctx.lineWidth = 1;
-    const gridRows = 5;
-    for(let i=0;i<=gridRows;i++){
-      const y = (h-1) * i / gridRows;
+    const yOf=p=>(max-p)/(max-min)*(h-20)+10;
+    ctx.strokeStyle=css('--line');
+    ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){
+      const y=i*(h-1)/5;
       ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
     }
-    const cols = Math.min(6, visible.length-1);
+    const cols=Math.min(6, Math.max(2,visible.length-1));
     for(let i=0;i<=cols;i++){
-      const x = plotW * i / Math.max(1, cols);
+      const x=plotW*i/cols;
       ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
     }
 
-    const yOf = p => (max - p) / (max - min) * (h - 20) + 10;
-    const candleW = Math.max(3, Math.floor(plotW / visible.length * 0.65));
-    visible.forEach((b, idx) => {
-      const x = plotW * (idx + 0.5) / visible.length;
-      const yH = yOf(b.high), yL = yOf(b.low), yO = yOf(b.open), yC = yOf(b.close);
-      const up = b.close >= b.open;
-      ctx.strokeStyle = up ? css('--buy') : css('--sell');
-      ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
-      ctx.fillStyle = up ? css('--buy') : css('--sell');
-      const top = Math.min(yO, yC), body = Math.max(2, Math.abs(yC - yO));
-      ctx.fillRect(x - candleW/2, top, candleW, body);
+    const candleW=Math.max(2,Math.floor(plotW/visible.length*0.65));
+    visible.forEach((b,i)=>{
+      const x=plotW*(i+.5)/visible.length;
+      const yH=yOf(b.high), yL=yOf(b.low), yO=yOf(b.open), yC=yOf(b.close);
+      const up=b.close>=b.open;
+      ctx.strokeStyle=up?css('--buy'):css('--sell');
+      ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(x,yH); ctx.lineTo(x,yL); ctx.stroke();
+      ctx.fillStyle=up?css('--buy'):css('--sell');
+      const top=Math.min(yO,yC), body=Math.max(2,Math.abs(yC-yO));
+      ctx.fillRect(x-candleW/2, top, candleW, body);
     });
 
-    ctx.fillStyle = css('--muted');
-    ctx.font = '11px sans-serif';
-    for(let i=0;i<5;i++){
-      const p = max - (max-min) * i / 4;
-      const y = yOf(p);
-      ctx.fillText(fmt(p,2), plotW + 4, y + 4);
-    }
-    ctx.beginPath();
-    ctx.moveTo(plotW,0); ctx.lineTo(plotW,h);
-    ctx.strokeStyle = css('--border');
-    ctx.stroke();
-
-    const curM1 = file.replay.currentM1;
-    const curTfIdx = Math.floor(curM1 / getTfStep(tf));
-    if(curTfIdx >= range.start && curTfIdx <= range.end){
-      const idx = curTfIdx - range.start;
-      const x = plotW * (idx + 0.5) / visible.length;
-      ctx.strokeStyle = css('--warn');
+    const curTfIdx=Math.floor(file.replay.currentM1/getTfStep(tf));
+    if(curTfIdx>=range.start&&curTfIdx<=range.end){
+      const idx=curTfIdx-range.start;
+      const x=plotW*(idx+.5)/visible.length;
+      ctx.strokeStyle=css('--warn');
       ctx.setLineDash([4,4]);
       ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    file.drawing.lines.forEach(line => {
-      if(line.price < min || line.price > max) return;
-      const y = yOf(line.price);
-      ctx.strokeStyle = line.id === state.selectedLineId ? css('--warn') : '#7ec8ff';
-      ctx.lineWidth = line.id === state.selectedLineId ? 2.2 : 1.2;
+    file.drawing.lines.forEach(line=>{
+      if(line.price<min||line.price>max) return;
+      const y=yOf(line.price);
+      ctx.strokeStyle=line.id===state.selectedLineId?css('--warn'):'#7ec8ff';
+      ctx.lineWidth=line.id===state.selectedLineId?2.2:1.3;
       ctx.setLineDash([8,4]);
       ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = line.id === state.selectedLineId ? css('--warn') : '#7ec8ff';
-      ctx.fillText(`A ${fmt(line.price,2)}`, 6, y - 4);
+      ctx.fillStyle=line.id===state.selectedLineId?css('--warn'):'#7ec8ff';
+      ctx.font='11px sans-serif';
+      ctx.fillText(`A ${fmt(line.price,2)}`,6,y-4);
     });
 
-    const ts = file.tradeState;
-    [['SL',ts.sl,'--sell'],['TP',ts.tp,'--buy']].forEach(([label,price,varName]) => {
-      if(price == null || price < min || price > max) return;
-      const y = yOf(price);
-      ctx.strokeStyle = css(varName);
-      ctx.lineWidth = 1.5;
+    if(ts.pendingPrice!=null && ts.positionStatus==='pending' && ts.pendingPrice>=min && ts.pendingPrice<=max){
+      const y=yOf(ts.pendingPrice);
+      ctx.strokeStyle='#c77dff';
+      ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
-      ctx.fillStyle = css(varName);
-      ctx.fillText(`${label} ${fmt(price,2)}`, 6, y - 4);
+      ctx.fillStyle='#c77dff'; ctx.fillText(`P ${fmt(ts.pendingPrice,2)}`,6,y-4);
+    }
+
+    if(ts.entry!=null && ts.positionStatus==='open' && ts.entry>=min && ts.entry<=max){
+      const y=yOf(ts.entry);
+      const entryColor=state.mode==='practice'?'#ffffff':'#111111';
+      ctx.strokeStyle=entryColor;
+      ctx.lineWidth=1.8;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
+      ctx.fillStyle=entryColor;
+      ctx.font='11px sans-serif';
+      ctx.fillText(`E ${fmt(ts.entry,2)}`,6,y-4);
+      const ur=unrealizedR(getCurrentPrice());
+      const txt=ur==null?'-':`${ur>=0?'+':''}${fmt(ur,2)}R`;
+      const m=ctx.measureText(txt).width;
+      ctx.fillText(txt, Math.max(6, plotW-m-6), y-4);
+    }
+
+    [['SL',ts.sl,css('--sell')],['TP',ts.tp,css('--buy')]].forEach(([label,val,color])=>{
+      if(val==null||val<min||val>max) return;
+      const y=yOf(val);
+      ctx.strokeStyle=color; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
+      ctx.fillStyle=color; ctx.font='11px sans-serif';
+      ctx.fillText(`${label} ${fmt(val,2)}`,6,y-4);
     });
 
-    if(ts.positionStatus === 'pending' && ts.pendingPrice != null && ts.pendingPrice >= min && ts.pendingPrice <= max){
-      const y = yOf(ts.pendingPrice);
-      ctx.strokeStyle = '#d68cff';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
-      ctx.fillStyle = '#d68cff';
-      ctx.fillText(`P ${fmt(ts.pendingPrice,2)}`, 6, y - 4);
-    }
-
-    if(ts.positionStatus === 'open' && ts.entry != null && ts.entry >= min && ts.entry <= max){
-      const y = yOf(ts.entry);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(plotW,y); ctx.stroke();
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(`E ${fmt(ts.entry,2)}`, 6, y - 4);
-    }
-
-    file.tradeState.markerLog.forEach(m => {
-      const tfIdx = Math.floor(m.m1Index / getTfStep(tf));
-      if(tfIdx < range.start || tfIdx > range.end) return;
-      if(m.price < min || m.price > max) return;
-      const idx = tfIdx - range.start;
-      const x = plotW * (idx + 0.5) / visible.length;
-      const y = yOf(m.price);
-      ctx.fillStyle = m.type === 'entry' ? css('--buy') : (m.type === 'exit' ? css('--sell') : '#d68cff');
-      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    ts.markerLog.forEach(m=>{
+      const tfIdx=Math.floor(m.m1Index/getTfStep(tf));
+      if(tfIdx<range.start||tfIdx>range.end) return;
+      if(m.price<min||m.price>max) return;
+      const x=plotW*((tfIdx-range.start)+.5)/visible.length;
+      const y=yOf(m.price);
+      ctx.fillStyle=m.type==='entry'?css('--buy'):m.type==='exit'?css('--sell'):'#c77dff';
+      ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
     });
 
-    const first = visible[0], last = visible[visible.length-1];
-    ctx.fillStyle = css('--muted');
-    ctx.fillText(shortLabel(first.time), 4, h - 4);
-    ctx.fillText(shortLabel(last.time), plotW - 60, h - 4);
-
-    canvas._chartMeta = {tf, paneKey, range, visible, min, max, yOf, plotW, w, h};
-  }
-
-  function shortLabel(ts){
-    const d = new Date(ts);
-    return `${pad2(d.getUTCMonth()+1)}/${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
-  }
-
-  function resizeCanvas(canvas){
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.max(10, Math.floor(rect.width * dpr));
-    const h = Math.max(10, Math.floor(rect.height * dpr));
-    if(canvas.width !== w || canvas.height !== h){
-      canvas.width = w;
-      canvas.height = h;
+    ctx.strokeStyle=css('--border');
+    ctx.beginPath(); ctx.moveTo(plotW,0); ctx.lineTo(plotW,h); ctx.stroke();
+    ctx.fillStyle=css('--muted'); ctx.font='11px sans-serif';
+    for(let i=0;i<5;i++){
+      const p=max-(max-min)*i/4;
+      const y=yOf(p);
+      ctx.fillText(fmt(p,2), plotW+4, y+4);
     }
+    ctx.fillText(shortLabel(visible[0].time),4,h-4);
+    ctx.fillText(shortLabel(visible[visible.length-1].time), Math.max(4,plotW-62),h-4);
+
+    canvas._meta={tf,paneKey,range,visible,min,max,yOf,plotW,w,h};
   }
 
-  function css(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
-
-  function renderChartScreen(){
+  function renderChart(){
     syncPaneConfig();
-    drawChart(els.chartCanvasTop, 'top', state.chart.paneConfigs[0].tf);
-    if(state.chart.viewMode === 'split'){
-      drawChart(els.chartCanvasBottom, 'bottom', state.chart.paneConfigs[1].tf);
-    }
-    renderStatusBar();
-    updateTopSegs();
+    updateHeaderUI();
+    drawChart(els.chartCanvasTop,'top',state.chart.paneConfigs[0].tf);
+    if(state.chart.viewMode==='split') drawChart(els.chartCanvasBottom,'bottom',state.chart.paneConfigs[1].tf);
+    setPositionStatusText();
   }
 
   function renderAll(){
-    renderChartScreen();
-    if(state.screen === 'stats') renderStatsScreen();
+    renderChart();
+    if(state.screen==='stats') renderStatsScreen();
   }
 
   function computeStats(trades){
-    const total = trades.length;
-    const rs = trades.map(t=>t.resultR).filter(v=>typeof v === 'number' && !Number.isNaN(v));
-    const wins = rs.filter(r=>r > 0);
-    const losses = rs.filter(r=>r < 0);
-    const winRate = total ? (wins.length / total * 100) : 0;
-    const avgR = rs.length ? rs.reduce((a,b)=>a+b,0)/rs.length : 0;
-    const pf = losses.length ? (wins.reduce((a,b)=>a+b,0) / Math.abs(losses.reduce((a,b)=>a+b,0))) : (wins.length ? Infinity : 0);
-    const expectancy = avgR;
-    let maxWinStreak = 0, maxLoseStreak = 0, w=0, l=0;
+    const valid=trades.filter(t=>typeof t.resultR==='number' && !Number.isNaN(t.resultR));
+    const total=trades.length;
+    const wins=valid.filter(t=>t.resultR>0);
+    const losses=valid.filter(t=>t.resultR<0);
+    const avgR=valid.length?valid.reduce((a,b)=>a+b.resultR,0)/valid.length:0;
+    const winRate=total?wins.length/total*100:0;
+    const totalWinR=wins.reduce((a,b)=>a+b.resultR,0);
+    const totalLossR=Math.abs(losses.reduce((a,b)=>a+b.resultR,0));
+    const pf=totalLossR?totalWinR/totalLossR:(totalWinR>0?Infinity:0);
+    const expectancy=avgR;
+    const avgProfitR=wins.length?wins.reduce((a,b)=>a+b.resultR,0)/wins.length:0;
+    const avgLossR=losses.length?Math.abs(losses.reduce((a,b)=>a+b.resultR,0)/losses.length):0;
+    const rr=avgLossR?avgProfitR/avgLossR:0;
+    let maxWinStreak=0,maxLoseStreak=0,ws=0,ls=0;
     trades.forEach(t=>{
-      const r = t.resultR ?? 0;
-      if(r > 0){ w++; l=0; maxWinStreak = Math.max(maxWinStreak, w); }
-      else if(r < 0){ l++; w=0; maxLoseStreak = Math.max(maxLoseStreak, l); }
-      else { w=0; l=0; }
+      const r=typeof t.resultR==='number'?t.resultR:0;
+      if(r>0){ ws++; ls=0; maxWinStreak=Math.max(maxWinStreak,ws); }
+      else if(r<0){ ls++; ws=0; maxLoseStreak=Math.max(maxLoseStreak,ls); }
+      else { ws=0; ls=0; }
     });
-    return {total, winRate, avgR, pf, expectancy, maxWinStreak, maxLoseStreak};
+    return {total,winRate,avgR,pf,expectancy,maxWinStreak,maxLoseStreak,avgProfitR,avgLossR,rr};
   }
 
-  function computeTimeStats(trades, detail=false){
-    const map = {};
-    if(detail){
-      for(let i=0;i<144;i++) map[i] = [];
-      trades.forEach(t => map[t.entrySlot10m]?.push(t));
-    }else{
-      for(let i=0;i<24;i++) map[i] = [];
-      trades.forEach(t => map[t.entryHour]?.push(t));
-    }
-    return Object.keys(map).map(k=>{
-      const group = map[k];
-      const stats = computeStats(group);
-      return {slot:+k, count:group.length, winRate:stats.winRate, pf:stats.pf, avgR:stats.avgR};
+  function timeStats(trades, detail=false){
+    const size=detail?144:24;
+    const buckets=Array.from({length:size},()=>[]);
+    trades.forEach(t=>{
+      const idx=detail?t.entrySlot10m:t.entrySlot1h;
+      if(idx>=0&&idx<size) buckets[idx].push(t);
     });
-  }
-
-  function renderMetrics(file){
-    const stats = computeStats(file.trades);
-    const items = [
-      ['総トレード数', stats.total],
-      ['勝率', `${fmt(stats.winRate,1)}%`],
-      ['平均R', fmt(stats.avgR,2)],
-      ['PF', stats.pf === Infinity ? '∞' : fmt(stats.pf,2)],
-      ['Expectancy', fmt(stats.expectancy,2)],
-      ['最大連敗', stats.maxLoseStreak],
-      ['最大連勝', stats.maxWinStreak]
-    ];
-    els.summaryMetrics.innerHTML = items.map(([k,v])=>`
-      <div class="metric">
-        <div class="k">${k}</div>
-        <div class="v">${v}</div>
-      </div>
-    `).join('');
-  }
-
-  function renderTimeStats(file){
-    const rows = computeTimeStats(file.trades, state.ui.slotDetail);
-    let html = '<table><thead><tr><th>時間帯</th><th>件数</th><th>勝率</th><th>PF</th><th>平均R</th></tr></thead><tbody>';
-    rows.forEach(r=>{
-      const label = state.ui.slotDetail
-        ? `${pad2(Math.floor(r.slot/6))}:${pad2((r.slot%6)*10)}`
-        : `${pad2(r.slot)}:00`;
-      html += `<tr>
-        <td>${label}</td>
-        <td>${r.count}</td>
-        <td>${fmt(r.winRate,1)}%</td>
-        <td>${r.pf===Infinity?'∞':fmt(r.pf,2)}</td>
-        <td>${fmt(r.avgR,2)}</td>
-      </tr>`;
-    });
-    html += '</tbody></table>';
-    els.timeStatsTableWrap.innerHTML = html;
-  }
-
-  function renderFileList(){
-    els.fileList.innerHTML = '';
-    state.fileOrder.forEach(id=>{
-      const file = state.files[id];
-      const div = document.createElement('div');
-      div.className = 'fileItem' + (id === state.currentFileId ? ' active' : '');
-      div.innerHTML = `
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${file.name}</div>
-          <div class="subtle">${file.trades.length} trades</div>
-        </div>
-        <button class="btn small">選択</button>
-      `;
-      div.querySelector('button').onclick = () => {
-        state.currentFileId = id;
-        renderAll();
-      };
-      els.fileList.appendChild(div);
-    });
-  }
-
-  function renderGraphFallback(canvas, cfg){
-    resizeCanvas(canvas);
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width, h = canvas.height;
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle = css('--panel2');
-    ctx.fillRect(0,0,w,h);
-    const pad = {l:40,r:12,t:12,b:26};
-    const plotW = w - pad.l - pad.r;
-    const plotH = h - pad.t - pad.b;
-    ctx.strokeStyle = css('--border');
-    ctx.strokeRect(pad.l,pad.t,plotW,plotH);
-
-    const xs = cfg.labels || [];
-    const datasets = cfg.datasets || [];
-    let all = [];
-    datasets.forEach(ds => all = all.concat(ds.data.filter(v=>typeof v==='number' && Number.isFinite(v))));
-    if(!all.length) all = [0,1];
-    const minY = Math.min(0, Math.min(...all));
-    const maxY = Math.max(1, Math.max(...all));
-    const yOf = v => pad.t + (maxY - v) / (maxY - minY || 1) * plotH;
-
-    for(let i=0;i<5;i++){
-      const v = minY + (maxY-minY) * i / 4;
-      const y = yOf(v);
-      ctx.strokeStyle = css('--line');
-      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+plotW,y); ctx.stroke();
-      ctx.fillStyle = css('--muted');
-      ctx.font = '11px sans-serif';
-      ctx.fillText(fmt(v,1), 2, y+4);
-    }
-
-    if(cfg.type === 'bar'){
-      const ds = datasets[0] || {data:[]};
-      const n = ds.data.length || 1;
-      ds.data.forEach((v,i)=>{
-        const bw = plotW / n * 0.72;
-        const x = pad.l + plotW * i / n + plotW / n * 0.14;
-        const y = yOf(v);
-        const base = yOf(0);
-        ctx.fillStyle = ds.color || css('--accent');
-        ctx.fillRect(x, Math.min(y,base), bw, Math.abs(base - y));
-      });
-    }else if(cfg.type === 'hist'){
-      const ds = datasets[0] || {data:[]};
-      const n = ds.data.length || 1;
-      ds.data.forEach((v,i)=>{
-        const bw = plotW / n * 0.8;
-        const x = pad.l + plotW * i / n + plotW / n * 0.1;
-        const y = yOf(v);
-        const base = yOf(0);
-        ctx.fillStyle = ds.color || css('--accent');
-        ctx.fillRect(x, Math.min(y,base), bw, Math.abs(base - y));
-      });
-    }else{
-      datasets.forEach(ds=>{
-        ctx.strokeStyle = ds.color || css('--accent');
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ds.data.forEach((v,i)=>{
-          const x = pad.l + (xs.length<=1 ? plotW/2 : plotW * i / (xs.length-1));
-          const y = yOf(v);
-          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        });
-        ctx.stroke();
-      });
-    }
-
-    ctx.fillStyle = css('--muted');
-    ctx.font = '11px sans-serif';
-    const step = Math.max(1, Math.ceil(xs.length / 6));
-    xs.forEach((xv,i)=>{
-      if(i % step !== 0 && i !== xs.length-1) return;
-      const x = pad.l + (xs.length<=1 ? plotW/2 : plotW * i / Math.max(1, xs.length-1));
-      ctx.fillText(String(xv), x - 10, h - 6);
-    });
-  }
-
-  function ensureChartJsLoaded(){
-    return new Promise((resolve) => {
-      if(window.Chart) { state.chartJsLoaded = true; return resolve(true); }
-      if(state.chartJsLoading) {
-        const iv = setInterval(()=>{
-          if(window.Chart){ clearInterval(iv); state.chartJsLoaded=true; resolve(true); }
-        },100);
-        setTimeout(()=>{ clearInterval(iv); resolve(!!window.Chart); }, 5000);
-        return;
-      }
-      state.chartJsLoading = true;
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js';
-      s.onload = () => { state.chartJsLoaded = true; state.chartJsLoading = false; resolve(true); };
-      s.onerror = () => { state.chartJsLoaded = false; state.chartJsLoading = false; resolve(false); };
-      document.head.appendChild(s);
-    });
-  }
-
-  function destroyChartJs(id){
-    if(state.chartsJsInstances[id]){
-      state.chartsJsInstances[id].destroy();
-      delete state.chartsJsInstances[id];
-    }
-  }
-
-  async function renderSmartGraph(baseId, cfg){
-    const canvasFallback = document.getElementById(baseId);
-    const chartCanvas = document.getElementById(baseId.replace('Canvas','ChartJs'));
-    if(state.onlineEnabled){
-      const ok = await ensureChartJsLoaded();
-      if(ok && window.Chart){
-        canvasFallback.style.display = 'none';
-        chartCanvas.style.display = 'block';
-        resizeCanvas(chartCanvas);
-        destroyChartJs(baseId);
-        state.chartsJsInstances[baseId] = new Chart(chartCanvas.getContext('2d'), {
-          type: cfg.chartJsType || (cfg.type === 'bar' || cfg.type === 'hist' ? 'bar' : 'line'),
-          data: {
-            labels: cfg.labels,
-            datasets: cfg.datasets.map(ds => ({
-              label: ds.label,
-              data: ds.data,
-              borderColor: ds.color || '#3b82f6',
-              backgroundColor: ds.fillColor || ds.color || 'rgba(59,130,246,.45)',
-              tension: .2,
-              fill: false
-            }))
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            scales: { y: { beginAtZero: false } },
-            plugins: { legend: { labels: { color: css('--text') } } }
-          }
-        });
-        return;
-      }
-    }
-    destroyChartJs(baseId);
-    chartCanvas.style.display = 'none';
-    canvasFallback.style.display = 'block';
-    renderGraphFallback(canvasFallback, cfg);
-  }
-
-  function equitySeries(trades){
-    let acc = 0;
-    return trades.map((t,i)=> {
-      acc += (t.resultR ?? 0);
-      return {x:i+1, y: roundPrice(acc)};
-    });
-  }
-
-  function hourPfSeries(trades){
-    const arr = computeTimeStats(trades, false);
-    return arr.map(r=>({x: pad2(r.slot), y: r.pf === Infinity ? (r.count ? 5 : 0) : roundPrice(r.pf)}));
-  }
-
-  function histogramR(trades){
-    const rs = trades.map(t=>t.resultR).filter(v=>typeof v==='number');
-    const bins = [];
-    for(let i=-4;i<=6;i++) bins.push({label:`${i}〜${i+1}`, count:0, min:i, max:i+1});
-    rs.forEach(r=>{
-      const b = bins.find(bin => r >= bin.min && r < bin.max) || (r >= 6 ? bins[bins.length-1] : null);
-      if(b) b.count++;
-    });
-    return bins;
-  }
-
-  function optimizeHoldBars(trades){
-    const out = [];
-    for(let n=1;n<=20;n++){
-      const sim = trades.map(t=>{
-        const base = t.resultR ?? 0;
-        const age = Math.max(1, (t.closeBar - t.openBar));
-        const factor = 0.6 + Math.min(1.6, n / (age + 1));
-        const v = base > 0 ? Math.min(base, base * factor * 0.92) : base * (1 + n*0.015);
-        return {...t, resultR: roundPrice(v)};
-      });
-      const s = computeStats(sim);
-      out.push({n, winRate:s.winRate, pf:s.pf, expectancy:s.expectancy});
-    }
-    return out;
-  }
-
-  function optimizeRR(trades){
-    const out = [];
-    for(let rr=1; rr<=5.001; rr+=0.5){
-      const rVal = Math.round(rr * 10) / 10;
-      const sim = trades.map(t=>{
-        const base = t.resultR;
-        if(base == null) return {...t, resultR:null};
-        let v = base;
-        if(base > 0){
-          v = base >= rVal ? rVal : -1;
-        }else{
-          v = -1;
-        }
-        return {...t, resultR: roundPrice(v)};
-      });
-      const s = computeStats(sim);
-      out.push({rr:rVal, winRate:s.winRate, pf:s.pf, expectancy:s.expectancy});
-    }
-    return out;
-  }
-
-  function renderOptimization(file){
-    const hold = optimizeHoldBars(file.trades);
-    const bestHold = hold.slice().sort((a,b)=>(b.expectancy-a.expectancy) || ((b.pf===Infinity?999:b.pf)-(a.pf===Infinity?999:a.pf)))[0];
-    els.holdBest.textContent = bestHold
-      ? `最適保有本数候補: ${bestHold.n}本 / PF ${bestHold.pf===Infinity?'∞':fmt(bestHold.pf,2)} / Expectancy ${fmt(bestHold.expectancy,2)}`
-      : 'データ不足';
-    els.holdTableWrap.innerHTML = makeTable(
-      ['N','勝率','PF','Expectancy'],
-      hold.map(r=>[
-        r.n,
-        `${fmt(r.winRate,1)}%`,
-        r.pf===Infinity?'∞':fmt(r.pf,2),
-        fmt(r.expectancy,2)
-      ])
-    );
-
-    const rr = optimizeRR(file.trades);
-    const bestRr = rr.slice().sort((a,b)=>(b.expectancy-a.expectancy) || ((b.pf===Infinity?999:b.pf)-(a.pf===Infinity?999:a.pf)))[0];
-    els.rrBest.textContent = bestRr
-      ? `最適RR候補: ${fmt(bestRr.rr,1)} / PF ${bestRr.pf===Infinity?'∞':fmt(bestRr.pf,2)} / Expectancy ${fmt(bestRr.expectancy,2)}`
-      : 'データ不足';
-    els.rrTableWrap.innerHTML = makeTable(
-      ['RR','勝率','PF','Expectancy'],
-      rr.map(r=>[
-        fmt(r.rr,1),
-        `${fmt(r.winRate,1)}%`,
-        r.pf===Infinity?'∞':fmt(r.pf,2),
-        fmt(r.expectancy,2)
-      ])
-    );
-
-    renderSmartGraph('holdCanvas', {
-      type:'line',
-      labels: hold.map(r=>r.n),
-      datasets: [
-        {label:'PF', data: hold.map(r=>r.pf===Infinity?5:r.pf), color:'#52a7ff'},
-        {label:'Expectancy', data: hold.map(r=>r.expectancy), color:'#28c76f'}
-      ]
-    });
-    renderSmartGraph('rrCanvas', {
-      type:'line',
-      labels: rr.map(r=>fmt(r.rr,1)),
-      datasets: [
-        {label:'PF', data: rr.map(r=>r.pf===Infinity?5:r.pf), color:'#52a7ff'},
-        {label:'Expectancy', data: rr.map(r=>r.expectancy), color:'#28c76f'}
-      ]
+    return buckets.map((arr,i)=>{
+      const s=computeStats(arr);
+      return {slot:i,count:arr.length,winRate:s.winRate,pf:s.pf,avgR:s.avgR};
     });
   }
 
@@ -1656,285 +1545,687 @@
     }</tbody></table>`;
   }
 
-  async function renderGraphs(file){
-    const eq = equitySeries(file.trades);
-    await renderSmartGraph('equityCanvas', {
+  function renderMetrics(file){
+    const s=computeStats(file.trades);
+    const items=[
+      ['総トレード数', s.total],
+      ['勝率', `${fmt(s.winRate,1)}%`],
+      ['平均R', fmt(s.avgR,2)],
+      ['PF', s.pf===Infinity?'∞':fmt(s.pf,2)],
+      ['Expectancy', fmt(s.expectancy,2)],
+      ['最大連敗', s.maxLoseStreak],
+      ['最大連勝', s.maxWinStreak],
+      ['平均利益R', fmt(s.avgProfitR,2)],
+      ['平均損失R', fmt(s.avgLossR,2)],
+      ['RR', fmt(s.rr,2)]
+    ];
+    els.summaryMetrics.innerHTML=items.map(([k,v])=>`
+      <div class="metric">
+        <div class="k">${k}</div>
+        <div class="v">${v}</div>
+      </div>`).join('');
+  }
+
+  function renderTimeStats(file){
+    const rows=timeStats(file.trades, state.ui.slotDetail);
+    els.timeStatsTableWrap.innerHTML=makeTable(
+      ['時間帯','件数','勝率','PF','平均R'],
+      rows.map(r=>{
+        const label=state.ui.slotDetail
+          ? `${pad2(Math.floor(r.slot/6))}:${pad2((r.slot%6)*10)}`
+          : `${pad2(r.slot)}:00`;
+        return [
+          label,
+          r.count,
+          `${fmt(r.winRate,1)}%`,
+          r.pf===Infinity?'∞':fmt(r.pf,2),
+          fmt(r.avgR,2)
+        ];
+      })
+    );
+  }
+
+  function renderTradeList(file){
+    if(!file.trades.length){
+      els.tradeListWrap.innerHTML='<div class="subtle">トレード履歴なし</div>';
+      return;
+    }
+    const rows=file.trades.map(t=>[
+      t.openTime,
+      fmt(t.entry,2),
+      fmt(t.closePrice,2),
+      fmt(t.sl,2),
+      fmt(t.tp,2),
+      t.closeReason,
+      t.resultR==null?'-':fmt(t.resultR,2)
+    ]);
+    els.tradeListWrap.innerHTML=makeTable(
+      ['Entry Time','Entry','Close','SL','TP','理由','resultR'],
+      rows
+    );
+  }
+
+  function equitySeries(trades){
+    let acc=0;
+    return trades.map((t,i)=>{
+      acc += typeof t.resultR==='number' ? t.resultR : 0;
+      return {x:i+1,y:round2(acc)};
+    });
+  }
+  function hourSeries(trades){
+    return timeStats(trades,false).map(r=>({label:pad2(r.slot),avgR:round2(r.avgR),winRate:round2(r.winRate)}));
+  }
+  function histSeries(trades){
+    const rs=trades.map(t=>t.resultR).filter(v=>typeof v==='number');
+    const bins=[];
+    for(let i=-4;i<=6;i++) bins.push({label:`${i}〜${i+1}`,min:i,max:i+1,count:0});
+    rs.forEach(r=>{
+      const idx = r>=6 ? bins.length-1 : bins.findIndex(b=>r>=b.min && r<b.max);
+      if(idx>=0) bins[idx].count++;
+    });
+    return bins;
+  }
+
+  function drawFallbackGraph(canvas, cfg){
+    resizeCanvas(canvas);
+    const ctx=canvas.getContext('2d');
+    const w=canvas.width,h=canvas.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle=css('--panel2'); ctx.fillRect(0,0,w,h);
+    const pad={l:40,r:12,t:12,b:26};
+    const pw=w-pad.l-pad.r, ph=h-pad.t-pad.b;
+    ctx.strokeStyle=css('--border'); ctx.strokeRect(pad.l,pad.t,pw,ph);
+    let values=[];
+    cfg.datasets.forEach(ds=>values=values.concat(ds.data.filter(v=>typeof v==='number'&&Number.isFinite(v))));
+    if(!values.length) values=[0,1];
+    const minY=Math.min(0,Math.min(...values));
+    const maxY=Math.max(1,Math.max(...values));
+    const yOf=v=>pad.t+(maxY-v)/(maxY-minY||1)*ph;
+    for(let i=0;i<5;i++){
+      const v=minY+(maxY-minY)*i/4;
+      const y=yOf(v);
+      ctx.strokeStyle=css('--line');
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+pw,y); ctx.stroke();
+      ctx.fillStyle=css('--muted'); ctx.font='11px sans-serif'; ctx.fillText(fmt(v,1),2,y+4);
+    }
+    if(cfg.type==='bar' || cfg.type==='hist'){
+      cfg.datasets.forEach((ds,di)=>{
+        const n=ds.data.length||1;
+        const groupW=pw/n;
+        ds.data.forEach((v,i)=>{
+          const barW=(groupW*.72)/cfg.datasets.length;
+          const x=pad.l+i*groupW+groupW*.14+di*barW;
+          const y=yOf(v), base=yOf(0);
+          ctx.fillStyle=ds.color||css('--accent');
+          ctx.fillRect(x,Math.min(y,base),barW,Math.abs(base-y));
+        });
+      });
+    }else{
+      cfg.datasets.forEach(ds=>{
+        ctx.strokeStyle=ds.color||css('--accent');
+        ctx.lineWidth=2; ctx.beginPath();
+        ds.data.forEach((v,i)=>{
+          const x=pad.l + (cfg.labels.length<=1 ? pw/2 : pw*i/(cfg.labels.length-1));
+          const y=yOf(v);
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+      });
+    }
+    ctx.fillStyle=css('--muted'); ctx.font='11px sans-serif';
+    const step=Math.max(1,Math.ceil(cfg.labels.length/6));
+    cfg.labels.forEach((lab,i)=>{
+      if(i%step!==0 && i!==cfg.labels.length-1) return;
+      const x=pad.l + (cfg.labels.length<=1 ? pw/2 : pw*i/Math.max(1,cfg.labels.length-1));
+      ctx.fillText(String(lab), x-10, h-6);
+    });
+  }
+
+  function ensureChartJsLoaded(){
+    return new Promise(resolve=>{
+      if(window.Chart){ state.chartJsLoaded=true; return resolve(true); }
+      if(state.chartJsLoading){
+        const iv=setInterval(()=>{
+          if(window.Chart){ clearInterval(iv); state.chartJsLoaded=true; resolve(true); }
+        },100);
+        setTimeout(()=>{ clearInterval(iv); resolve(!!window.Chart); },4000);
+        return;
+      }
+      state.chartJsLoading=true;
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js';
+      s.onload=()=>{ state.chartJsLoaded=true; state.chartJsLoading=false; resolve(true); };
+      s.onerror=()=>{ state.chartJsLoaded=false; state.chartJsLoading=false; resolve(false); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function destroyJsChart(id){
+    if(state.chartsJsInstances[id]){
+      state.chartsJsInstances[id].destroy();
+      delete state.chartsJsInstances[id];
+    }
+  }
+
+  async function renderSmartGraph(baseId, cfg){
+    const fallback=document.getElementById(baseId);
+    const jsCanvas=document.getElementById(baseId.replace('Canvas','ChartJs'));
+    if(state.onlineEnabled){
+      const ok=await ensureChartJsLoaded();
+      if(ok && window.Chart){
+        fallback.style.display='none';
+        jsCanvas.style.display='block';
+        destroyJsChart(baseId);
+        state.chartsJsInstances[baseId]=new Chart(jsCanvas.getContext('2d'),{
+          type: cfg.chartJsType || (cfg.type==='bar'||cfg.type==='hist'?'bar':'line'),
+          data:{
+            labels:cfg.labels,
+            datasets:cfg.datasets.map(ds=>({
+              label:ds.label,
+              data:ds.data,
+              borderColor:ds.color||'#3b82f6',
+              backgroundColor:ds.fillColor||ds.color||'rgba(59,130,246,.4)',
+              tension:.25,
+              fill:false,
+              yAxisID:ds.yAxisID || 'y'
+            }))
+          },
+          options:{
+            responsive:true, maintainAspectRatio:false, animation:false,
+            scales:{
+              y:{beginAtZero:false},
+              y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false}, suggestedMax:100}
+            },
+            plugins:{legend:{labels:{color:css('--text')}}}
+          }
+        });
+        return;
+      }
+    }
+    destroyJsChart(baseId);
+    jsCanvas.style.display='none';
+    fallback.style.display='block';
+    drawFallbackGraph(fallback,cfg);
+  }
+
+  function optimizeHold(trades){
+    const out=[];
+    for(let n=1;n<=20;n++){
+      const sim=trades.map(t=>{
+        const base=typeof t.resultR==='number'?t.resultR:0;
+        const held=Math.max(1,(t.closeBar-t.openBar));
+        const factor = Math.min(1.65, 0.55 + n/(held+1));
+        const adj = base>0 ? base*factor*.9 : base*(1+n*0.015);
+        return {...t,resultR:round2(adj)};
+      });
+      const s=computeStats(sim);
+      out.push({n,winRate:s.winRate,pf:s.pf,expectancy:s.expectancy});
+    }
+    return out;
+  }
+
+  function optimizeRR(trades){
+    const out=[];
+    for(let rr=1; rr<=5.001; rr+=0.5){
+      const v=round2(rr);
+      const sim=trades.map(t=>{
+        if(typeof t.resultR!=='number') return {...t,resultR:null};
+        const realized=t.resultR;
+        const r = realized>=v ? v : realized>0 ? -1 : -1;
+        return {...t,resultR:round2(r)};
+      });
+      const s=computeStats(sim);
+      out.push({rr:v,winRate:s.winRate,pf:s.pf,expectancy:s.expectancy});
+    }
+    return out;
+  }
+
+  function renderOptimization(file){
+    const hold=optimizeHold(file.trades);
+    const bestHold=hold.slice().sort((a,b)=>(b.expectancy-a.expectancy)||((b.pf===Infinity?999:b.pf)-(a.pf===Infinity?999:a.pf)))[0];
+    els.holdBest.textContent=bestHold?`最適N候補: ${bestHold.n}本 / PF ${bestHold.pf===Infinity?'∞':fmt(bestHold.pf,2)} / Expectancy ${fmt(bestHold.expectancy,2)}`:'データ不足';
+    els.holdTableWrap.innerHTML=makeTable(
+      ['N','勝率','PF','Expectancy'],
+      hold.map(r=>[r.n,`${fmt(r.winRate,1)}%`,r.pf===Infinity?'∞':fmt(r.pf,2),fmt(r.expectancy,2)])
+    );
+
+    const rr=optimizeRR(file.trades);
+    const bestRr=rr.slice().sort((a,b)=>(b.expectancy-a.expectancy)||((b.pf===Infinity?999:b.pf)-(a.pf===Infinity?999:a.pf)))[0];
+    els.rrBest.textContent=bestRr?`最適RR候補: ${fmt(bestRr.rr,1)} / PF ${bestRr.pf===Infinity?'∞':fmt(bestRr.pf,2)} / Expectancy ${fmt(bestRr.expectancy,2)}`:'データ不足';
+    els.rrTableWrap.innerHTML=makeTable(
+      ['RR','勝率','PF','Expectancy'],
+      rr.map(r=>[fmt(r.rr,1),`${fmt(r.winRate,1)}%`,r.pf===Infinity?'∞':fmt(r.pf,2),fmt(r.expectancy,2)])
+    );
+
+    renderSmartGraph('holdCanvas',{
       type:'line',
-      labels:eq.map(p=>p.x),
-      datasets:[{label:'Equity(R)', data:eq.map(p=>p.y), color:'#52a7ff'}]
+      labels:hold.map(r=>r.n),
+      datasets:[
+        {label:'PF',data:hold.map(r=>r.pf===Infinity?5:r.pf),color:'#52a7ff'},
+        {label:'Expectancy',data:hold.map(r=>r.expectancy),color:'#28c76f'}
+      ]
+    });
+    renderSmartGraph('rrCanvas',{
+      type:'line',
+      labels:rr.map(r=>fmt(r.rr,1)),
+      datasets:[
+        {label:'PF',data:rr.map(r=>r.pf===Infinity?5:r.pf),color:'#52a7ff'},
+        {label:'Expectancy',data:rr.map(r=>r.expectancy),color:'#28c76f'}
+      ]
+    });
+  }
+
+  async function renderGraphs(file){
+    const eq=equitySeries(file.trades);
+    await renderSmartGraph('equityCanvas',{
+      type:'line',
+      labels:eq.map(v=>v.x),
+      datasets:[{label:'Equity(R)',data:eq.map(v=>v.y),color:'#52a7ff'}]
     });
 
-    const pf = hourPfSeries(file.trades);
-    await renderSmartGraph('hourPfCanvas', {
+    const hs=hourSeries(file.trades);
+    await renderSmartGraph('hourStatsCanvas',{
       type:'bar',
       chartJsType:'bar',
-      labels:pf.map(p=>p.x),
-      datasets:[{label:'PF', data:pf.map(p=>p.y), color:'#ffb020'}]
+      labels:hs.map(v=>v.label),
+      datasets:[
+        {label:'平均R',data:hs.map(v=>v.avgR),color:'#52a7ff',yAxisID:'y'},
+        {label:'勝率',data:hs.map(v=>v.winRate),color:'#ffb020',yAxisID:'y1'}
+      ]
     });
 
-    const hist = histogramR(file.trades);
-    await renderSmartGraph('histCanvas', {
+    const hist=histSeries(file.trades);
+    await renderSmartGraph('histCanvas',{
       type:'hist',
       chartJsType:'bar',
-      labels:hist.map(b=>b.label),
-      datasets:[{label:'Count', data:hist.map(b=>b.count), color:'#9b7bff'}]
+      labels:hist.map(v=>v.label),
+      datasets:[{label:'件数',data:hist.map(v=>v.count),color:'#9c7bff'}]
+    });
+  }
+
+  function renderFiles(){
+    els.fileList.innerHTML='';
+    state.fileOrder.forEach(id=>{
+      const f=state.files[id];
+      if(!f) return;
+      const div=document.createElement('div');
+      div.className='fileItem'+(id===state.currentFileId?' active':'');
+      div.innerHTML=`
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+          <div class="subtle">${f.trades.length} trades</div>
+        </div>
+        <button class="btn small">選択</button>
+      `;
+      div.querySelector('button').onclick=()=>{
+        state.currentFileId=id;
+        renderAll();
+        saveState();
+      };
+      els.fileList.appendChild(div);
     });
   }
 
   function renderStatsScreen(){
-    updateTopSegs();
-    const file = currentFile();
-    renderFileList();
+    updateHeaderUI();
+    const file=currentFile();
+    renderFiles();
     renderMetrics(file);
     renderTimeStats(file);
+    renderTradeList(file);
     renderOptimization(file);
     renderGraphs(file);
-    $$('.tabBtn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === state.ui.statsTab));
-    $$('.tabPane').forEach(p => p.classList.toggle('active', p.id === `tab-${state.ui.statsTab}`));
+    $$('.tabBtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===state.ui.statsTab));
+    $$('.tabPane').forEach(p=>p.classList.toggle('active', p.id===`tab-${state.ui.statsTab}`));
   }
 
-  function createCurrentPriceLine(){
-    axisLongPressCreateLine(getCurrentPrice());
-  }
-
-  function handleCanvasInteractions(canvas, paneName){
-    let pressTimer = null;
-    let start = null;
-    let dragging = false;
-    let lastTap = 0;
-    let dragMode = null;
-
-    const getPt = e => {
-      const rect = canvas.getBoundingClientRect();
-      const t = e.touches ? e.touches[0] : e;
-      return {x:t.clientX - rect.left, y:t.clientY - rect.top};
+  function exportStats(type){
+    const file=currentFile();
+    const stats=computeStats(file.trades);
+    const payload={
+      file:file.name,
+      stats,
+      trades:file.trades
     };
-
-    function hitAxis(meta, pt){
-      const cssW = canvas.getBoundingClientRect().width;
-      const axisCssW = state.chart.priceAxisWidth;
-      return pt.x >= cssW - axisCssW;
+    let blob,name;
+    if(type==='json'){
+      blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      name=`${file.name.replace(/\s+/g,'_')}_stats.json`;
+    }else{
+      const lines=[
+        `file: ${file.name}`,
+        `total: ${stats.total}`,
+        `winRate: ${fmt(stats.winRate,1)}%`,
+        `avgR: ${fmt(stats.avgR,2)}`,
+        `PF: ${stats.pf===Infinity?'∞':fmt(stats.pf,2)}`,
+        `Expectancy: ${fmt(stats.expectancy,2)}`,
+        `maxLoseStreak: ${stats.maxLoseStreak}`,
+        `maxWinStreak: ${stats.maxWinStreak}`,
+        `RR: ${fmt(stats.rr,2)}`,
+        '',
+        'Trades:',
+        ...file.trades.map(t=>`${t.openTime} | ${t.side} | entry ${fmt(t.entry,2)} | close ${fmt(t.closePrice,2)} | ${t.closeReason} | R ${t.resultR==null?'-':fmt(t.resultR,2)}`)
+      ];
+      blob=new Blob([lines.join('\n')],{type:'text/plain'});
+      name=`${file.name.replace(/\s+/g,'_')}_stats.txt`;
     }
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },200);
+  }
 
-    function priceFromPoint(meta, pt){
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const y = pt.y * scaleY;
-      const p = meta.max - (y - 10) / (meta.h - 20) * (meta.max - meta.min);
-      return roundPrice(p);
-    }
+  function openLineMenu(line, x, y){
+    state.transient.ctxLineId=line.id;
+    state.selectedLineId=line.id;
+    const panel=els.lineCtxPanel;
+    panel.style.left=`${Math.min(window.innerWidth-190, Math.max(8,x-80))}px`;
+    panel.style.top=`${Math.min(window.innerHeight-250, Math.max(8,y-20))}px`;
+    els.lineContextMenu.classList.add('active');
+    renderChart();
+  }
 
-    function nearestLine(meta, pt){
-      const file = currentFile();
-      const rect = canvas.getBoundingClientRect();
-      const scaleY = canvas.height / rect.height;
-      const y = pt.y * scaleY;
-      let best = null, bestDist = 14 * scaleY;
-      file.drawing.lines.forEach(line=>{
-        const ly = meta.yOf(line.price);
-        const d = Math.abs(ly - y);
-        if(d < bestDist){ bestDist = d; best = line; }
+  function resetView(tf){
+    const file=currentFile();
+    file.replay.visibleCount[tf]=file.replay.defaultVisible[tf];
+    file.replay.centerByTf[tf]=Math.floor(file.replay.currentM1/getTfStep(tf));
+    renderChart();
+    saveState();
+  }
+
+  function bindCanvasInteractions(canvas){
+    let start=null;
+    let longPressTimer=null;
+    let dragging=false;
+    let dragLineId=null;
+    let pinchStartDist=null;
+    let pinchStartVis=null;
+    let lastTapTime=0;
+
+    const getTouchPoints=e=>{
+      if(e.touches) return Array.from(e.touches).map(t=>({x:t.clientX,y:t.clientY}));
+      return [{x:e.clientX,y:e.clientY}];
+    };
+    const getPointInCanvas=(clientX, clientY)=>{
+      const rect=canvas.getBoundingClientRect();
+      return {x:clientX-rect.left, y:clientY-rect.top, rect};
+    };
+    const getMeta=()=>canvas._meta;
+    const axisHit=pt=>{
+      const rect=canvas.getBoundingClientRect();
+      return pt.x >= rect.width - state.chart.priceAxisWidth;
+    };
+    const lineHit=(meta, pt)=>{
+      if(!meta) return null;
+      const rect=canvas.getBoundingClientRect();
+      const y=pt.y*(canvas.height/rect.height);
+      let best=null,bestD=16*(canvas.height/rect.height);
+      currentFile().drawing.lines.forEach(line=>{
+        const ly=meta.yOf(line.price);
+        const d=Math.abs(ly-y);
+        if(d<bestD){ bestD=d; best=line; }
       });
       return best;
-    }
+    };
+    const priceAtPoint=(meta, pt)=>{
+      const rect=canvas.getBoundingClientRect();
+      const scaleY=canvas.height/rect.height;
+      const y=pt.y*scaleY;
+      return round2(meta.max - (y-10)/(meta.h-20)*(meta.max-meta.min));
+    };
+    const pinchDist=pts=>{
+      const dx=pts[1].x-pts[0].x;
+      const dy=pts[1].y-pts[0].y;
+      return Math.sqrt(dx*dx+dy*dy);
+    };
 
-    function resetView(meta){
-      const file = currentFile();
-      const tf = meta.tf;
-      const idx = Math.floor(file.replay.currentM1 / getTfStep(tf));
-      file.replay.centerByTf[tf] = idx;
-      renderAll();
-    }
-
-    function onStart(e){
-      const meta = canvas._chartMeta;
+    function startPress(e){
+      const meta=getMeta();
       if(!meta) return;
-      const pt = getPt(e);
-      start = pt;
-      dragging = false;
-      dragMode = hitAxis(meta, pt) ? 'axis' : 'plot';
-      pressTimer = setTimeout(()=>{
-        if(dragMode === 'axis'){
-          const price = priceFromPoint(meta, pt);
-          axisLongPressCreateLine(price);
-        }else{
-          const line = nearestLine(meta, pt);
-          if(line){
-            state.selectedLineId = line.id;
-            openSheet();
-            renderAll();
-          }
+      const pts=getTouchPoints(e);
+      if(pts.length===2){
+        pinchStartDist=pinchDist(pts);
+        pinchStartVis=currentFile().replay.visibleCount[meta.tf];
+        clearTimeout(longPressTimer);
+        return;
+      }
+      const pt=getPointInCanvas(pts[0].x, pts[0].y);
+      start=pt;
+      dragging=false;
+      dragLineId=null;
+      const line=lineHit(meta, pt);
+      longPressTimer=setTimeout(()=>{
+        if(axisHit(pt)){
+          addLine(priceAtPoint(meta, pt));
+        }else if(line){
+          state.selectedLineId=line.id;
+          openLineMenu(line, pts[0].x, pts[0].y);
         }
       }, state.chart.longPressMs);
+      if(line) dragLineId=line.id;
     }
 
-    function onMove(e){
-      const meta = canvas._chartMeta;
-      if(!meta || !start) return;
-      const pt = getPt(e);
-      const dx = pt.x - start.x;
-      const dy = pt.y - start.y;
-      if(Math.abs(dx) > state.chart.dragThreshold || Math.abs(dy) > state.chart.dragThreshold){
-        dragging = true;
-        clearTimeout(pressTimer);
-      }
-      if(dragging && dragMode === 'plot'){
+    function movePress(e){
+      const meta=getMeta();
+      if(!meta) return;
+      const pts=getTouchPoints(e);
+
+      if(pts.length===2 && pinchStartDist){
         e.preventDefault();
-        const tf = meta.tf;
-        const file = currentFile();
-        const barsPerScreen = file.replay.visibleCount[tf];
-        const movedBars = Math.round(-dx / Math.max(1, canvas.getBoundingClientRect().width - state.chart.priceAxisWidth) * barsPerScreen);
-        const maxVisibleIdx = Math.floor(file.replay.currentM1 / getTfStep(tf));
-        const cur = file.replay.centerByTf[tf] ?? maxVisibleIdx;
-        file.replay.centerByTf[tf] = clamp(cur + movedBars, Math.floor(barsPerScreen/2), Math.max(Math.floor(barsPerScreen/2), maxVisibleIdx));
-        start = pt;
-        renderAll();
+        clearTimeout(longPressTimer);
+        dragging=true;
+        const dist=pinchDist(pts);
+        const ratio=pinchStartDist/dist;
+        const minVis=meta.tf==='M1'?18:meta.tf==='M15'?12:8;
+        const maxVis=meta.tf==='M1'?140:meta.tf==='M15'?120:90;
+        currentFile().replay.visibleCount[meta.tf]=clamp(Math.round(pinchStartVis*ratio), minVis, maxVis);
+        renderChart();
+        return;
+      }
+
+      if(!start || !pts.length) return;
+      const pt=getPointInCanvas(pts[0].x, pts[0].y);
+      const dx=pt.x-start.x, dy=pt.y-start.y;
+      if(Math.abs(dx)>state.chart.dragThreshold || Math.abs(dy)>state.chart.dragThreshold){
+        dragging=true;
+        clearTimeout(longPressTimer);
+      }
+      if(!dragging) return;
+
+      e.preventDefault();
+      if(dragLineId){
+        const line=currentFile().drawing.lines.find(l=>l.id===dragLineId);
+        if(line){
+          line.price=priceAtPoint(meta, pt);
+          state.selectedLineId=line.id;
+          renderChart();
+          saveState();
+        }
+      }else{
+        const tf=meta.tf;
+        const file=currentFile();
+        const movedBars=Math.round(-dx/Math.max(1,canvas.getBoundingClientRect().width-state.chart.priceAxisWidth)*file.replay.visibleCount[tf]);
+        const maxIdx=Math.floor(file.replay.currentM1/getTfStep(tf));
+        const cur=file.replay.centerByTf[tf] ?? maxIdx;
+        file.replay.centerByTf[tf]=clamp(cur+movedBars, Math.floor(file.replay.visibleCount[tf]/2), Math.max(Math.floor(file.replay.visibleCount[tf]/2), maxIdx));
+        start=pt;
+        renderChart();
       }
     }
 
-    function onEnd(e){
-      clearTimeout(pressTimer);
-      const meta = canvas._chartMeta;
-      if(!meta || !start) { start = null; return; }
-      const pt = getPt(e.changedTouches ? {touches:[e.changedTouches[0]]} : e);
-      const now = Date.now();
+    function endPress(e){
+      const meta=getMeta();
+      clearTimeout(longPressTimer);
+      const pts=e.changedTouches ? Array.from(e.changedTouches).map(t=>({x:t.clientX,y:t.clientY})) : [{x:e.clientX,y:e.clientY}];
+      if(!meta || !pts.length){ start=null; pinchStartDist=null; pinchStartVis=null; dragLineId=null; return; }
+      const pt=getPointInCanvas(pts[0].x, pts[0].y);
+      const now=Date.now();
+
       if(!dragging){
-        const axis = hitAxis(meta, pt);
-        if(axis && now - lastTap < 300){
-          resetView(meta);
-        }else if(!axis){
-          const line = nearestLine(meta, pt);
-          if(line && now - lastTap < 300){
-            state.selectedLineId = line.id;
-            deleteSelectedLine();
-          }else if(line){
-            state.selectedLineId = line.id;
-            renderAll();
+        const line=lineHit(meta, pt);
+        if(axisHit(pt)){
+          if(now-lastTapTime<300) resetView(meta.tf);
+        }else if(line){
+          state.selectedLineId=line.id;
+          if(state.ui.lineDoubleDelete && now-lastTapTime<300){
+            deleteLine(line.id);
+          }else{
+            renderChart();
+          }
+        }else{
+          if(setSlOrTpByTap(priceAtPoint(meta, pt))){
+          }else{
+            state.selectedLineId=null;
+            renderChart();
           }
         }
-        lastTap = now;
+        lastTapTime=now;
       }
-      start = null;
-      dragging = false;
-      dragMode = null;
+      start=null;
+      dragging=false;
+      dragLineId=null;
+      pinchStartDist=null;
+      pinchStartVis=null;
     }
 
-    ['mousedown','touchstart'].forEach(ev=>canvas.addEventListener(ev,onStart,{passive:false}));
-    ['mousemove','touchmove'].forEach(ev=>canvas.addEventListener(ev,onMove,{passive:false}));
-    ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>canvas.addEventListener(ev,onEnd,{passive:false}));
+    ['mousedown','touchstart'].forEach(ev=>canvas.addEventListener(ev,startPress,{passive:false}));
+    ['mousemove','touchmove'].forEach(ev=>canvas.addEventListener(ev,movePress,{passive:false}));
+    ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>canvas.addEventListener(ev,endPress,{passive:false}));
   }
 
-  function attachEvents(){
-    $$('#modeSeg button').forEach(b=>b.addEventListener('click', ()=>setMode(b.dataset.mode)));
-    $$('#tfSeg button').forEach(b=>b.addEventListener('click', ()=>switchTimeframe(b.dataset.tf)));
-    $$('#viewSeg button').forEach(b=>b.addEventListener('click', ()=>switchViewMode(b.dataset.view)));
-    $$('.sessionBtn').forEach(b=>b.addEventListener('click', ()=>jumpToSession(b.dataset.session)));
+  function bindEvents(){
+    $$('#modeSeg button').forEach(b=>b.onclick=()=>switchMode(b.dataset.mode));
+    $$('#viewSeg button').forEach(b=>b.onclick=()=>switchViewMode(b.dataset.view));
+    $$('#tfSeg button').forEach(b=>b.onclick=()=>switchTimeframe(b.dataset.tf));
+    $$('.sessionBtn').forEach(b=>b.onclick=()=>jumpToSession(b.dataset.session));
 
-    els.hamburgerBtn.onclick = openMenu;
-    $$('.backdrop').forEach(b=>b.onclick = () => {
-      closeMenu(); closeConfirm(); closeSheet();
-    });
-    els.openStatsMenuBtn.onclick = () => { closeMenu(); setScreen('stats'); };
-    els.openOrdersSheetBtn.onclick = () => { closeMenu(); openSheet(); };
-    els.createLineAtPriceBtn.onclick = () => { closeMenu(); createCurrentPriceLine(); };
-    els.backToChartBtn.onclick = () => setScreen('chart');
+    els.speedRange.oninput=()=>{ state.speedBarsPerMinute=clamp(parseInt(els.speedRange.value,10),2,60); updateHeaderUI(); saveState(); };
+    els.fastInput.onchange=()=>{ state.fastMultiplierN=clamp(parseInt(els.fastInput.value||10,10),1,50); updateHeaderUI(); saveState(); };
 
-    els.confirmCancelBtn.onclick = closeConfirm;
-    els.confirmOkBtn.onclick = () => { if(confirmHandler) confirmHandler(); closeConfirm(); };
-
-    els.applyOrderBtn.onclick = applyOrderFromSheet;
-    els.convertSelectedLineBtn.onclick = () => {
-      const line = lineById();
-      if(line) els.orderPriceInput.value = fmt(line.price,2);
-    };
-    els.setSlTpFromSelectedLineBtn.onclick = setSlTpFromLine;
-    els.deleteSelectedLineBtn.onclick = deleteSelectedLine;
-    els.clearPendingBtn.onclick = clearPending;
-    els.sheetCloseBtn.onclick = closeSheet;
-
-    els.sellBtn.onclick = () => openMarket('sell');
-    els.buyBtn.onclick = () => openMarket('buy');
-    els.closeBtn.onclick = manualClose;
-    els.nextBtn.onclick = () => stepReplay(1,true);
-    els.backBtn.onclick = () => stepReplay(1,false);
-    els.stopBtn.onclick = stopPlay;
-    els.playBtn.onclick = () => playStart();
-
-    let playHoldTimer = null;
-    let nextHoldTimer = null;
-    const holdStart = () => { playHoldTimer = setTimeout(()=>startFastForward(), 360); };
-    const holdEnd = () => { clearTimeout(playHoldTimer); if(state.fastMode) playStart(); };
-    els.playBtn.addEventListener('touchstart', holdStart, {passive:true});
-    els.playBtn.addEventListener('mousedown', holdStart);
-    ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>els.playBtn.addEventListener(ev, holdEnd));
-
-    const holdNextStart = () => {
-      nextHoldTimer = setTimeout(()=>{
-        stopPlay();
-        state.fastMode = true;
-        const minTf = state.chart.viewMode === 'split'
-          ? (state.chart.paneConfigs[0].tf === 'M1' ? 1 : 15)
-          : getTfStep(state.chart.timeframe);
-        const barsPerSec = clamp(minTf * state.fastMultiplierN, 1, 1200);
-        const perTick = Math.max(1, Math.round(barsPerSec / 10));
-        state.playTimer = setInterval(()=>stepReplay(perTick,true),100);
-        renderAll();
-      }, 360);
-    };
-    const holdNextEnd = () => {
-      clearTimeout(nextHoldTimer);
-      if(state.fastMode){
-        stopPlay();
-      }
-    };
-    els.nextBtn.addEventListener('touchstart', holdNextStart, {passive:true});
-    els.nextBtn.addEventListener('mousedown', holdNextStart);
-    ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>els.nextBtn.addEventListener(ev, holdNextEnd));
-
-    els.netSwitch.onclick = () => {
-      state.onlineEnabled = !state.onlineEnabled;
-      renderStatsScreen();
-    };
-    els.slotModeSwitch.onclick = () => {
-      state.ui.slotDetail = !state.ui.slotDetail;
-      renderStatsScreen();
-    };
-    $$('.tabBtn').forEach(btn=>btn.onclick = () => {
-      state.ui.statsTab = btn.dataset.tab;
-      renderStatsScreen();
+    els.hamburgerBtn.onclick=openMenu;
+    $$('.backdrop').forEach(b=>b.onclick=()=>{
+      closeMenu(); closeConfirm(); closeSheet(); closeManageSheet(); closeCtxMenu();
     });
 
-    els.newFileBtn.onclick = () => {
-      const name = prompt('新規ファイル名を入力してください', `XAU Sample ${state.fileOrder.length + 1}`);
-      if(!name) return;
-      const file = createFile(name);
-      state.files[file.id] = file;
-      state.fileOrder.push(file.id);
-      state.currentFileId = file.id;
+    els.goStatsBtn.onclick=()=>{ closeMenu(); setScreen('stats'); };
+    els.openOrderSheetBtn.onclick=()=>{ closeMenu(); openSheet(); };
+    els.makeCurrentLineBtn.onclick=()=>{ closeMenu(); addLine(getCurrentPrice()); };
+
+    els.confirmCancelBtn.onclick=closeConfirm;
+    els.confirmOkBtn.onclick=()=>{ if(state.transient.confirmHandler) state.transient.confirmHandler(); closeConfirm(); };
+
+    els.slModeBtn.onclick=()=>{
+      const ts=position();
+      if(!['pending','open'].includes(ts.positionStatus)) return;
+      state.ui.setMode=state.ui.setMode==='sl'?null:'sl';
+      updateHeaderUI();
+    };
+    els.tpModeBtn.onclick=()=>{
+      const ts=position();
+      if(!['pending','open'].includes(ts.positionStatus)) return;
+      state.ui.setMode=state.ui.setMode==='tp'?null:'tp';
+      updateHeaderUI();
+    };
+
+    els.backBtn.onclick=()=>stepReplay(1,false);
+    els.stopBtn.onclick=stopPlay;
+    els.playBtn.onclick=()=>startPlay();
+
+    let playHold=null;
+    const holdStart=()=>{ playHold=setTimeout(()=>startFastForward(),320); };
+    const holdEnd=()=>{ clearTimeout(playHold); if(state.fastMode) stopPlay(); };
+    ['touchstart','mousedown'].forEach(ev=>els.playBtn.addEventListener(ev,holdStart,{passive:true}));
+    ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>els.playBtn.addEventListener(ev,holdEnd));
+
+    els.sellBtn.onclick=()=>marketOpen('sell');
+    els.buyBtn.onclick=()=>marketOpen('buy');
+    els.closeBtn.onclick=()=>closeOpenPosition('manual');
+    els.manageOrderBtn.onclick=openManageSheet;
+
+    els.applyManageBtn.onclick=()=>{
+      const ts=position();
+      if(!['pending','open'].includes(ts.positionStatus)) return;
+      ts.sl=els.manageSlInput.value===''?null:round2(parseFloat(els.manageSlInput.value));
+      ts.tp=els.manageTpInput.value===''?null:round2(parseFloat(els.manageTpInput.value));
+      if(ts.positionStatus==='open' && ts.sl!=null) ts.risk=round2(Math.abs(ts.entry-ts.sl));
+      closeManageSheet();
       renderAll();
+      saveState();
     };
-    els.deleteFileBtn.onclick = () => {
-      if(state.fileOrder.length <= 1) return alert('最後の1ファイルは削除できません。');
-      const id = state.currentFileId;
-      askConfirm('ファイル削除', `${currentFile().name} を削除しますか？`, () => {
+    els.cancelOrCloseBtn.onclick=()=>{
+      const ts=position();
+      if(ts.positionStatus==='pending') clearPending();
+      else if(ts.positionStatus==='open') closeOpenPosition('manual');
+      closeManageSheet();
+    };
+    els.closeManageSheetBtn.onclick=closeManageSheet;
+
+    els.applyOrderBtn.onclick=applyOrderSheet;
+    els.convertLineBtn.onclick=()=>{
+      const line=selectedLine(); if(line) els.orderPriceInput.value=fmt(line.price,2);
+    };
+    els.setSlTpFromLineBtn.onclick=setSlTpFromLine;
+    els.deleteLineBtn.onclick=()=>{ const line=selectedLine(); if(line) deleteLine(line.id); };
+    els.clearPendingBtn.onclick=clearPending;
+    els.closeSheetBtn.onclick=closeSheet;
+
+    $$('#lineCtxPanel .ctxBtn').forEach(btn=>btn.onclick=()=>{
+      const lineId=state.transient.ctxLineId;
+      const line=currentFile().drawing.lines.find(l=>l.id===lineId);
+      if(!line) return;
+      const ord=btn.dataset.order;
+      if(ord==='delete'){ deleteLine(line.id); return; }
+      placePending(ord, line.price);
+      closeCtxMenu();
+      renderAll();
+      saveState();
+    });
+
+    els.backToChartBtn.onclick=()=>setScreen('chart');
+    els.netSwitch.onclick=()=>{ state.onlineEnabled=!state.onlineEnabled; renderStatsScreen(); saveState(); };
+    els.slotModeSwitch.onclick=()=>{ state.ui.slotDetail=!state.ui.slotDetail; renderStatsScreen(); saveState(); };
+    els.doubleDeleteSwitch.onclick=()=>{ state.ui.lineDoubleDelete=!state.ui.lineDoubleDelete; renderStatsScreen(); saveState(); };
+
+    $$('.tabBtn').forEach(btn=>btn.onclick=()=>{
+      state.ui.statsTab=btn.dataset.tab;
+      renderStatsScreen();
+      saveState();
+    });
+
+    els.newFileBtn.onclick=()=>{
+      const name=prompt('新規ファイル名', `XAU Sample ${state.fileOrder.length+1}`);
+      if(!name) return;
+      const f=createFile(name);
+      state.files[f.id]=f;
+      state.fileOrder.push(f.id);
+      state.currentFileId=f.id;
+      renderAll();
+      saveState();
+    };
+    els.deleteFileBtn.onclick=()=>{
+      if(state.fileOrder.length<=1){ alert('最後の1ファイルは削除できません。'); return; }
+      askConfirm('ファイル削除', `${currentFile().name} を削除しますか？`, ()=>{
+        const id=state.currentFileId;
         delete state.files[id];
-        state.fileOrder = state.fileOrder.filter(v=>v!==id);
-        state.currentFileId = state.fileOrder[0];
+        state.fileOrder=state.fileOrder.filter(v=>v!==id);
+        state.currentFileId=state.fileOrder[0];
         renderAll();
+        saveState();
       });
     };
 
-    handleCanvasInteractions(els.chartCanvasTop, 'top');
-    handleCanvasInteractions(els.chartCanvasBottom, 'bottom');
+    els.downloadJsonBtn.onclick=()=>exportStats('json');
+    els.downloadTxtBtn.onclick=()=>exportStats('txt');
+
+    bindCanvasInteractions(els.chartCanvasTop);
+    bindCanvasInteractions(els.chartCanvasBottom);
 
     window.addEventListener('resize', renderAll);
   }
 
-  setupInitialState();
-  attachEvents();
-  updateTopSegs();
-  renderAll();
+  bootstrap();
 })();
 </script>
 </body>
