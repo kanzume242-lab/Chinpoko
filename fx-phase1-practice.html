@@ -515,8 +515,12 @@ function drawChart(ch){
   const allBars=g.bars;
   const bars=allBars.slice(g.start,g.end+1);
   if(!bars.length)return;
-  let min=Math.min.apply(null,bars.map(b=>b.l));
-  let max=Math.max.apply(null,bars.map(b=>b.h));
+  const candleMin=Math.min.apply(null,bars.map(b=>b.l));
+  const candleMax=Math.max.apply(null,bars.map(b=>b.h));
+  const minRange=ch.tf==="M1"?4.5:(ch.tf==="M15"?12:28);
+  const baseRange=Math.max(candleMax-candleMin,minRange);
+  let scaleMin=candleMin;
+  let scaleMax=candleMax;
   const prices=[];
   state.lines.forEach(l=>prices.push(Number(l.price)));
   const p=state.position;
@@ -524,9 +528,17 @@ function drawChart(ch){
   if(Number.isFinite(Number(p.sl)))prices.push(Number(p.sl));
   if(Number.isFinite(Number(p.tp)))prices.push(Number(p.tp));
   if(state.settings.currentLine&&currentBar())prices.push(currentBar().c);
-  prices.forEach(v=>{if(Number.isFinite(v)){min=Math.min(min,v);max=Math.max(max,v)}});
-  const pad=(max-min)*.12||5;
-  ch.min=min-pad;ch.max=max+pad;
+  const nearby=Math.max(baseRange*.75,minRange);
+  prices.forEach(v=>{
+    if(!Number.isFinite(v))return;
+    if(v<scaleMin&&v>=candleMin-nearby)scaleMin=v;
+    if(v>scaleMax&&v<=candleMax+nearby)scaleMax=v;
+  });
+  const scaleRange=Math.max(scaleMax-scaleMin,minRange);
+  const center=(scaleMax+scaleMin)/2;
+  const pad=scaleRange*.16;
+  ch.min=center-scaleRange/2-pad;
+  ch.max=center+scaleRange/2+pad;
   ch.left=0;ch.top=0;ch.plotW=Math.max(20,W-axisW);ch.plotH=H;ch.h=H;
   ch.barW=Math.max(3,ch.plotW/Math.max(24,bars.length+ch.rightPad));
   ctx.strokeStyle=cssVar("--grid");
@@ -1020,7 +1032,10 @@ function stats(trades){
   });
   const avgWin=wins.length?gp/wins.length:0;
   const avgLoss=losses.length?gl/losses.length:0;
-  return {n:n,winRate:n?wins.length/n*100:0,avgR:n?sum/n:0,pf:gl?gp/gl:(gp?Infinity:0),expectancy:n?sum/n:0,maxW:maxW,maxL:maxL,rr:avgLoss?avgWin/avgLoss:0,sum:sum};
+  const winP=n?wins.length/n:0;
+  const lossP=n?losses.length/n:0;
+  const rrr=lossP&&avgLoss?(winP*avgWin)/(lossP*avgLoss):(winP&&avgWin?Infinity:0);
+  return {n:n,winRate:n?winP*100:0,lossRate:n?lossP*100:0,avgR:n?sum/n:0,pf:gl?gp/gl:(gp?Infinity:0),expectancy:n?sum/n:0,maxW:maxW,maxL:maxL,avgWin:avgWin,avgLoss:avgLoss,rr:avgLoss?avgWin/avgLoss:0,rrr:rrr,sum:sum};
 }
 function hourlyStats(stepMin){
   const map={};
@@ -1056,7 +1071,7 @@ function renderSummaryTab(body){
   body.innerHTML=
     '<div class="card"><h3>集計</h3><div class="statGrid">'+
     metric("総トレード数",s.n)+metric("勝率",s.winRate.toFixed(1)+"%")+metric("平均R",s.avgR.toFixed(2))+metric("Profit Factor",s.pf===Infinity?"∞":s.pf.toFixed(2))+
-    metric("Expectancy",s.expectancy.toFixed(2))+metric("最大連勝",s.maxW)+metric("最大連敗",s.maxL)+metric("リスクリワード比",s.rr.toFixed(2))+
+    metric("Expectancy",s.expectancy.toFixed(2))+metric("最大連勝",s.maxW)+metric("最大連敗",s.maxL)+metric("RRR",s.rrr===Infinity?"∞":s.rrr.toFixed(2))+
     '</div></div>'+
     '<div class="card"><h3>時間帯統計 JST 1時間</h3>'+simpleTable(["時間","数","勝率","PF"],hourly.map(x=>[x.key,x.n,x.winRate.toFixed(0)+"%",x.pf===Infinity?"∞":x.pf.toFixed(2)]))+'</div>'+
     '<div class="card"><h3>詳細モード JST 10分</h3>'+simpleTable(["時間","数","勝率","PF"],ten.map(x=>[x.key,x.n,x.winRate.toFixed(0)+"%",x.pf===Infinity?"∞":x.pf.toFixed(2)]))+'</div>'+
@@ -1089,9 +1104,9 @@ function renderExitTab(body){
   const bestN=nRows.reduce((a,b)=>b.expectancy>a.expectancy?b:a,{expectancy:-Infinity,rule:"-"});
   const bestRR=rrRows.reduce((a,b)=>b.expectancy>a.expectancy?b:a,{expectancy:-Infinity,rule:"-"});
   body.innerHTML=
-    '<div class="card"><h3>簡易グラフ</h3><canvas class="graphCanvas" id="exitGraph"></canvas><span class="badge">最適N '+esc(String(bestN.rule))+'</span> <span class="badge">最適RR '+esc(String(bestRR.rule))+'</span></div>'+
+    '<div class="card"><h3>簡易グラフ</h3><canvas class="graphCanvas" id="exitGraph"></canvas><span class="badge">最適N '+esc(String(bestN.rule))+'</span> <span class="badge">最適倍率 '+esc(String(bestRR.rule))+'</span></div>'+
     '<div class="card"><h3>N本後決済ルール</h3>'+simpleTable(["N","勝率","PF","Expectancy"],nRows.map(x=>[x.rule,x.winRate.toFixed(1)+"%",x.pf===Infinity?"∞":x.pf.toFixed(2),x.expectancy.toFixed(2)]))+'</div>'+
-    '<div class="card"><h3>RR固定TPルール</h3>'+simpleTable(["RR","勝率","PF","Expectancy"],rrRows.map(x=>[x.rule,x.winRate.toFixed(1)+"%",x.pf===Infinity?"∞":x.pf.toFixed(2),x.expectancy.toFixed(2)]))+'</div>';
+    '<div class="card"><h3>固定TP倍率ルール</h3>'+simpleTable(["倍率","勝率","PF","Expectancy"],rrRows.map(x=>[x.rule,x.winRate.toFixed(1)+"%",x.pf===Infinity?"∞":x.pf.toFixed(2),x.expectancy.toFixed(2)]))+'</div>';
   setTimeout(()=>drawExitGraph(nRows),0);
 }
 function simulateNExit(t,n){
